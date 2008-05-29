@@ -1,0 +1,6 @@
+LICENSE
+MANIFEST
+SIGNATURE
+Makefile.PL
+Fingerprint.pm
+apps/fpdns
