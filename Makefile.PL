@@ -4,7 +4,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     'NAME' => 'Net::DNS::Fingerprint',
-    'VERSION_FROM' => 'Fingerprint.pm',
+    'VERSION_FROM' => 'lib/Net/DNS/Fingerprint.pm',
     'PREREQ_PM' => { Net::DNS => 0.42 },
     'EXE_FILES' => [ "apps/fpdns" ],
     'NO_META' => 1,
