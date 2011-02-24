@@ -1,5 +1,3 @@
-# $Id$
-#
 # Copyright (c) 2003,2004,2005 Roy Arends & Jakob Schlyter.
 # All rights reserved.
 #
