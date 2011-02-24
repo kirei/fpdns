@@ -1,5 +1,3 @@
-# $Id: Makefile.PL,v 1.4 2005/03/04 14:17:46 jakob Exp $
-
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
