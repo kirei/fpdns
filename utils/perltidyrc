@@ -1,0 +1,20 @@
+# perltidyrc for Net::DNS::Fingerprint
+
+
+# basic options
+--maximum-line-length=80
+--indent-columns=4
+
+# code indentation control
+--continuation-indentation=2
+
+# whitespace control
+--paren-tightness=2
+--square-bracket-tightness=2
+--block-brace-tightness=0
+--space-for-semicolon
+--add-semicolons
+--nospace-function-paren
+
+# line break control
+--cuddled-else
