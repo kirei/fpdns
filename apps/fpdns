@@ -6,7 +6,7 @@
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 # 1. Redistributions of source code must retain the above copyright
 #    notice, this list of conditions and the following disclaimer.
 # 2. Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
 #    documentation and/or other materials provided with the distribution.
 # 3. The name of the authors may not be used to endorse or promote products
 #    derived from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
 # IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 # OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -39,10 +39,9 @@ use vars qw/ %opt /;
 use POSIX ":sys_wait_h";
 
 my $progname = "fpdns";
-my $version = Net::DNS::Fingerprint->version();
+my $version  = Net::DNS::Fingerprint->version();
 
-sub main
-{
+sub main {
     $opt{p} = 53;
     $opt{t} = 5;
     $opt{r} = 1;
@@ -58,101 +57,104 @@ sub main
     getopts('Q:DF:p:t:r:cfsS:dTv', \%opt);
 
     $opt{v} && die "$progname version $version\n";
-    
+
     unless ($#ARGV >= 0) {
-        usage(); 
+        usage();
         exit(1);
     }
 
     my $engine = Net::DNS::Fingerprint->new(
-	source   => $opt{Q},
-	debug    => $opt{d},
-	timeout  => $opt{t},
-	retry    => $opt{r},
-        forcetcp => $opt{T},
-	qversion => $opt{v},
-	qchaos   => $opt{f},
-	separator=> $opt{S},
+        source    => $opt{Q},
+        debug     => $opt{d},
+        timeout   => $opt{t},
+        retry     => $opt{r},
+        forcetcp  => $opt{T},
+        qversion  => $opt{v},
+        qchaos    => $opt{f},
+        separator => $opt{S},
     );
 
     if ($ARGV[0] eq "-") {
-       while(<STDIN>) {
-          my $pid = fork;
-          if ((not defined $pid) and not ($! =~ /Resource temporarily unavailable/)) {
-             die "Can't fork: $!\n";
-          } elsif ($pid == 0) {
-             chomp;
-             fingerprint($engine, $_);
-             exit(0);
-          } else {
-             $concurrent++;
-             $children{$pid} = 1;
-             while ($concurrent >= $opt{F}) {
-                my $child = waitpid -1, 0;
-                $concurrent--;
-                delete($children{$child});
-             }
-          }
-       }
-       while ($concurrent) {
-          my $child = waitpid -1, 0;
-          $concurrent--;
-          delete($children{$child});
-       }
+        while (<STDIN>) {
+            my $pid = fork;
+            if ((not defined $pid)
+                and not($! =~ /Resource temporarily unavailable/))
+            {
+                die "Can't fork: $!\n";
+            } elsif ($pid == 0) {
+                chomp;
+                fingerprint($engine, $_);
+                exit(0);
+            } else {
+                $concurrent++;
+                $children{$pid} = 1;
+                while ($concurrent >= $opt{F}) {
+                    my $child = waitpid -1, 0;
+                    $concurrent--;
+                    delete($children{$child});
+                }
+            }
+        }
+        while ($concurrent) {
+            my $child = waitpid -1, 0;
+            $concurrent--;
+            delete($children{$child});
+        }
     } else {
-        while($#ARGV + 1) {
+        while ($#ARGV + 1) {
             fingerprint($engine, shift @ARGV);
         }
     }
 }
 
-sub fingerprint
-{
-    my ($engine,$server) = @_;
+sub fingerprint {
+    my ($engine, $server) = @_;
     my @addresses = dnslookup($server);
     if ($#addresses >= 0) {
-	for my $a (@addresses) {
-	    my $fp = $engine->string($a, $opt{p});
-	    $opt{s} && (printf("%-15s %s\n", $a, $fp)) || print "fingerprint ($server, $a): $fp\n";
-	}
+        for my $a (@addresses) {
+            my $fp = $engine->string($a, $opt{p});
+            $opt{s} && (printf("%-15s %s\n", $a, $fp))
+              || print "fingerprint ($server, $a): $fp\n";
+        }
     } else {
-	print STDERR "host not found ($server)";
+        print STDERR "host not found ($server)";
     }
 }
 
-sub dnslookup
-{
-    my $arg = shift;
+sub dnslookup {
+    my $arg       = shift;
     my @addresses = ();
     return $arg if ($arg =~ /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/);
 
-    my $resolver = Net::DNS::Resolver->new(srcaddr=>$opt{Q},usevc=>$opt{T});
+    my $resolver =
+      Net::DNS::Resolver->new(srcaddr => $opt{Q}, usevc => $opt{T});
     if ($opt{D}) {
-       my $query = $resolver->send($arg, "NS");
-       if ($query) {
-          for my $rr ($query->answer) {
-             my $query_address = $resolver->send($rr->rdatastr, "A") if $rr->type eq "NS";
-             if ($query_address) {
-                for my $address_rr ($query_address->answer) {
-                   push @addresses, $address_rr->address if $address_rr->type eq "A";
+        my $query = $resolver->send($arg, "NS");
+        if ($query) {
+            for my $rr ($query->answer) {
+                my $query_address = $resolver->send($rr->rdatastr, "A")
+                  if $rr->type eq "NS";
+                if ($query_address) {
+                    for my $address_rr ($query_address->answer) {
+                        push @addresses, $address_rr->address
+                          if $address_rr->type eq "A";
+                    }
                 }
-             }
-          }
-       }
-    } else { 
-       my $query = $resolver->send($arg, "A");
-       if ($query) {
-     	  for my $rr ($query->answer) {
-	     push @addresses, $rr->address if $rr->type eq "A";
-	  }
-       }
+            }
+        }
+    } else {
+        my $query = $resolver->send($arg, "A");
+        if ($query) {
+            for my $rr ($query->answer) {
+                push @addresses, $rr->address if $rr->type eq "A";
+            }
+        }
     }
 
     return @addresses;
 }
 
-sub usage
-{
+sub usage {
     print STDERR <<EOF;
 Usage: $progname [-c] [-d] [-D] [-f] [-p port] [-Q srcaddr] [-r retry] [-s] [-t timeout] [-T] [-v] server(s)|Domain
 Where: server|Domain is an ip address, a resolvable name, or a domain name.
@@ -172,12 +174,11 @@ Where: server|Domain is an ip address, a resolvable name, or a domain name.
        -v         (show version)
 
 EOF
-        exit 2;
+    exit 2;
 
 }
 
 &main;
-
 
 =head1 NAME
 
