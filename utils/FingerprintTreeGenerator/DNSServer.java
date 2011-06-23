@@ -1,5 +1,3 @@
-package treegenerator;
-
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
@@ -34,7 +32,7 @@ class DNSServer {
     }
 
     in.close();
-    }catch (Exception e){//Catch exception if any
+    }catch (Exception e){
       System.err.println("Error: " + e.getMessage());
     }
   }

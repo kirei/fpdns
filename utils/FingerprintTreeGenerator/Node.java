@@ -1,5 +1,4 @@
-package treegenerator;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import org.apache.commons.collections.map.MultiValueMap;
@@ -21,25 +20,37 @@ class Node {
     children = new HashMap<String, Node>();
   }
 
-  void printXML(){
-    System.out.println("<query num=\""+this.query+"\">");
+  @SuppressWarnings("unchecked") //Else we get a warning about unchecked cast
+  String getXML(ArrayList<String> responses){
+    StringBuilder sb = new StringBuilder();
+    sb.append("<query num=\""+this.query+"\">\n");
 
     for(String r: this.uniqueHits.keySet()){
-      System.out.println("  <response id=\""+r+"\">"+this.uniqueHits.get(r).name+"</response>");
+      sb.append("  <response id=\""+this.addResponseToArrayList(responses, r)+"\">"+this.uniqueHits.get(r).name+"</response>\n");
     }
 
     for(Object r: this.multipleHits.keySet()){
-      System.out.println("  <response id=\""+r+"\">"+getServersString((List<DNSServer>)this.multipleHits.get(r))+"</response>");
+
+      sb.append("  <response id=\""+this.addResponseToArrayList(responses, (String)r)+"\">"+getServersString((List<DNSServer>)this.multipleHits.get(r))+"</response>\n");
     }
 
     for(String r: children.keySet()){
-      System.out.println("  <response id=\""+r+"\">");
-      children.get(r).printXML();
-      System.out.println("  </response>");
+      sb.append("  <response id=\""+this.addResponseToArrayList(responses, r)+"\">\n");
+      sb.append(children.get(r).getXML(responses));
+      sb.append("  </response>\n");
 
     }
 
-    System.out.println("</query>");
+    sb.append("</query>\n");
+
+    return sb.toString();
+  }
+
+  int addResponseToArrayList(ArrayList<String> responses, String response){
+    if(!responses.contains(response)){
+      responses.add(response);
+    }
+    return responses.indexOf(response);
   }
 
   String getServersString(List<DNSServer> servers){

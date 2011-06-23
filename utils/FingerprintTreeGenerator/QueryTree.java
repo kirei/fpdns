@@ -1,5 +1,4 @@
-package treegenerator;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.collections.map.MultiValueMap;
@@ -22,8 +21,8 @@ public class QueryTree {
     this.growTree(root);
   }
 
-  public void printXML(){
-    this.root.printXML();
+  public String getXML(ArrayList<String> responses){
+   return this.root.getXML(responses);
   }
 
   private void growTree(Node cur) {

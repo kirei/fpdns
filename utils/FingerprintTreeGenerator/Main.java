@@ -1,4 +1,3 @@
-package treegenerator;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -9,10 +8,14 @@ import org.apache.commons.collections.map.MultiValueMap;
 public class Main {
 
   public static final int NUM_RESPONSES = 4528;
-  public static final String RESPONSE_FILES_FOLDER = "/Users/sjobe/Desktop/responses";
 
   public static void main(String[] args) {
-    String[] serverResponseFilePaths = getResponseFiles();
+    if (args.length == 0) {
+      System.out.println("Please pass in the path to the response folders as an argument.");
+      return;
+    }
+    String responseFilesPath = args[0];
+    String[] serverResponseFilePaths = getResponseFiles(responseFilesPath);
     int numServers = serverResponseFilePaths.length;
     ArrayList<QueryTree> queryTrees = new ArrayList<QueryTree>();
     DNSServer servers[] = initServers(numServers, serverResponseFilePaths);
@@ -37,7 +40,7 @@ public class Main {
       for (Object response : responses) {
         serverList = ((List) serversGroupedByResponse.get(response));
         if (serverList.size() == 1) {
-          matched =  (DNSServer)serverList.get(0);
+          matched = (DNSServer) serverList.get(0);
           //System.out.println("If Query # " + queryIndex + " returns " + response + " then server is " + matched.name);
           //TODO: If a query tree with that index already exists, add hit to that tree
           node = new Node();
@@ -64,16 +67,30 @@ public class Main {
     printXML(queryTrees);
   }
 
-  static void printXML(List<QueryTree> queryTrees){
+  static void printXML(List<QueryTree> queryTrees) {
+    ArrayList<String> responses = new ArrayList<String>();
+    String fingerprintTree = "";
+    
     System.out.println("<?xml version=\"1.0\"?>");
-    for(QueryTree tree: queryTrees){
-      tree.printXML();
+    for (QueryTree tree : queryTrees) {
+      fingerprintTree += tree.getXML(responses);
     }
+
+    System.out.println("<responses>");
+    for(int i=0; i<responses.size(); i++){
+      System.out.println("<response id=\""+i+"\">"+responses.get(i)+"</response>");
+    }
+    System.out.println("</responses>");
+
+
+    System.out.println("<tree>");
+    System.out.println(fingerprintTree);
+    System.out.println("</tree>");
   }
 
-  static String[] getResponseFiles() {
+  static String[] getResponseFiles(String responseFilesPath) {
     ArrayList<String> paths = new ArrayList<String>();
-    File folder = new File(RESPONSE_FILES_FOLDER);
+    File folder = new File(responseFilesPath);
     File[] files = folder.listFiles();
     for (int i = 0; i < files.length; i++) {
       if (files[i].isFile() && files[i].getName().endsWith(".fpr")) {
