@@ -1,6 +1,11 @@
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.collections.map.MultiValueMap;
@@ -8,18 +13,22 @@ import org.apache.commons.collections.map.MultiValueMap;
 public class Main {
 
   public static final int NUM_RESPONSES = 4528;
+  // comma separated string of what versions of response collector output this generator can handle
+  public static final String RESPONSE_COLLECTOR_VERSIONS = "0.1";
 
   public static void main(String[] args) {
     if (args.length == 0) {
       System.out.println("Please pass in the path to the response folders as an argument.");
       return;
     }
-    String responseFilesPath = args[0];
+    String queriesFilePath = args[0];
+    String responseFilesPath = args[1];
     String[] serverResponseFilePaths = getResponseFiles(responseFilesPath);
     int numServers = serverResponseFilePaths.length;
     ArrayList<QueryTree> queryTrees = new ArrayList<QueryTree>();
     DNSServer servers[] = initServers(numServers, serverResponseFilePaths);
-    int queries[] = getUniqueQueries(numServers, servers);
+    Query allQueries[] = getAllQueries(NUM_RESPONSES, queriesFilePath);
+    int queryIndexes[] = getUniqueQueries(numServers, servers);
 
     //Find queries that can identify a server in 1 try
     MultiValueMap serversGroupedByResponse;
@@ -28,7 +37,7 @@ public class Main {
     List serverList;
     Set responses;
     Node node;
-    for (int queryIndex : queries) {
+    for (int queryIndex : queryIndexes) {
       serversGroupedByResponse = new MultiValueMap();
       for (int i = 0; i < servers.length; i++) {
         s = servers[i];
@@ -46,11 +55,15 @@ public class Main {
           node = new Node();
           node.query = queryIndex;
           node.uniqueHits.put((String) response, matched);
-          QueryTree qt = new QueryTree(node, queries);
+          QueryTree qt = new QueryTree(node, queryIndexes);
 
           queryTrees.add(qt);
           matched.isTreeNode = true;
         }
+      }
+      if (queryTrees.size() > 0) {
+        //TODO: Refactor code later. Doing this so we only have 1 tree instead of multiple
+        break;
       }
     }
 
@@ -64,21 +77,23 @@ public class Main {
     }
     node.multipleHits = nodeChildrenGroupedByResponse;
     queryTrees.get(0).growTree();
-    printXML(queryTrees);
+    //printXML(queryTrees);
+    ArrayList<String> res = new ArrayList<String>();
+    System.out.println(queryTrees.get(0).getPerlFPDNSFormat(allQueries, res));
   }
 
   static void printXML(List<QueryTree> queryTrees) {
     ArrayList<String> responses = new ArrayList<String>();
     String fingerprintTree = "";
-    
+
     System.out.println("<?xml version=\"1.0\"?>");
     for (QueryTree tree : queryTrees) {
       fingerprintTree += tree.getXML(responses);
     }
 
     System.out.println("<responses>");
-    for(int i=0; i<responses.size(); i++){
-      System.out.println("<response id=\""+i+"\">"+responses.get(i)+"</response>");
+    for (int i = 0; i < responses.size(); i++) {
+      System.out.println("<response id=\"" + i + "\">" + responses.get(i) + "</response>");
     }
     System.out.println("</responses>");
 
@@ -106,6 +121,37 @@ public class Main {
       servers[i] = (new DNSServer(NUM_RESPONSES, serverResponseFilePaths[i]));
     }
     return servers;
+  }
+
+  static Query[] getAllQueries(int numQueries, String queriesFilePath) {
+    Query queries[] = new Query[numQueries];
+    try {
+
+      FileInputStream fstream = new FileInputStream(queriesFilePath);
+      DataInputStream in = new DataInputStream(fstream);
+      BufferedReader br = new BufferedReader(new InputStreamReader(in));
+      String strLine;
+      int lineNum = 0;
+      int queryIndex = 0;
+      while ((strLine = br.readLine()) != null) {
+        if (lineNum == 0) {
+          //TODO: Make sure the response file version is compatible with this collector
+          lineNum++;
+        } else {
+          queries[queryIndex] = new Query();
+          queries[queryIndex].header = strLine;
+          queries[queryIndex].nameClassType = br.readLine();
+          queryIndex++;
+          lineNum+=2;
+        }
+      }
+
+      in.close();
+    } catch (Exception e) {
+      
+      System.err.println("Error: " + e.getMessage()+ e.toString());
+    }
+    return queries;
   }
 
   static int[] getUniqueQueries(int numServers, DNSServer servers[]) {

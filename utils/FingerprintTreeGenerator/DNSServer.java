@@ -25,7 +25,7 @@ class DNSServer {
     int lineNum = 0;
     while ((strLine = br.readLine()) != null)   {
       if(lineNum == 0)
-        this.name = strLine;
+        this.name = strLine.replaceAll("\"", ""); 
       else
         this.responses[lineNum - 1] = strLine;
       lineNum++;

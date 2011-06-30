@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.collections.map.MultiValueMap;
@@ -23,6 +24,30 @@ public class QueryTree {
 
   public String getXML(ArrayList<String> responses){
    return this.root.getXML(responses);
+  }
+
+  public String getPerlFPDNSFormat(Query[] allQueries, ArrayList<String> responses){
+    String perlCode;
+    String initRule = "my %initrule = (header => $qy[0], query  => \". IN A\", );\n";
+    String ruleSet = "my @ruleset = (\n";
+    ruleSet+= this.root.getPerlFPDNSFormat(responses);
+    ruleSet += ");\n";
+    String  iq = "my @iq = (";
+    int count = 0;
+    for(String response: responses){
+      iq+= "\""+response+"\",    #iq"+count+"\n";
+      count++;
+    }
+    iq+= ");\n";
+
+    String qy = "my @qy = (";
+    /*for(int j=0; j<queryArray.length; j++){
+      qy += "\""+queryArray[j].header+"\",  \n";
+    }*/
+    qy+= ");\n";
+
+    perlCode = qy + initRule + iq + ruleSet;
+    return perlCode;
   }
 
   private void growTree(Node cur) {
