@@ -1,11 +1,9 @@
-
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.collections.map.MultiValueMap;
@@ -18,25 +16,25 @@ public class Main {
 
   public static void main(String[] args) {
     if (args.length == 0) {
-      System.out.println("Please pass in the path to the response folders as an argument.");
+      System.out.println("Missing arguments. Pass in path to response files and query file");
       return;
     }
     String queriesFilePath = args[0];
     String responseFilesPath = args[1];
     String[] serverResponseFilePaths = getResponseFiles(responseFilesPath);
     int numServers = serverResponseFilePaths.length;
-    ArrayList<QueryTree> queryTrees = new ArrayList<QueryTree>();
     DNSServer servers[] = initServers(numServers, serverResponseFilePaths);
     Query allQueries[] = getAllQueries(NUM_RESPONSES, queriesFilePath);
     int queryIndexes[] = getUniqueQueries(numServers, servers);
 
-    //Find queries that can identify a server in 1 try
+    //Find initial query
     MultiValueMap serversGroupedByResponse;
     DNSServer s;
     DNSServer matched;
     List serverList;
     Set responses;
     Node node;
+    QueryTree queryTree = null;
     for (int queryIndex : queryIndexes) {
       serversGroupedByResponse = new MultiValueMap();
       for (int i = 0; i < servers.length; i++) {
@@ -55,53 +53,31 @@ public class Main {
           node = new Node();
           node.query = queryIndex;
           node.uniqueHits.put((String) response, matched);
-          QueryTree qt = new QueryTree(node, queryIndexes);
+          queryTree = new QueryTree(node, queryIndexes);
 
-          queryTrees.add(qt);
+          //queryTrees.add(qt);
           matched.isTreeNode = true;
         }
       }
-      if (queryTrees.size() > 0) {
+      if (queryTree != null) {
         //TODO: Refactor code later. Doing this so we only have 1 tree instead of multiple
         break;
       }
     }
 
-    node = queryTrees.get(0).root;
-    MultiValueMap nodeChildrenGroupedByResponse = new MultiValueMap();
+    Node rootNode = queryTree.root;
     for (int i = 0; i < servers.length; i++) {
       s = servers[i];
       if (!s.isTreeNode) {
-        nodeChildrenGroupedByResponse.put(s.responses[node.query], s);
+        rootNode.multipleHits.put(s.responses[rootNode.query], s);
       }
     }
-    node.multipleHits = nodeChildrenGroupedByResponse;
-    queryTrees.get(0).growTree();
-    //printXML(queryTrees);
-    ArrayList<String> res = new ArrayList<String>();
-    System.out.println(queryTrees.get(0).getPerlFPDNSFormat(allQueries, res));
+    queryTree.growTree();
+
+    System.out.println(queryTree.getXML());
+    //System.out.println(queryTree.getPerlFPDNSFormat(allQueries));
   }
 
-  static void printXML(List<QueryTree> queryTrees) {
-    ArrayList<String> responses = new ArrayList<String>();
-    String fingerprintTree = "";
-
-    System.out.println("<?xml version=\"1.0\"?>");
-    for (QueryTree tree : queryTrees) {
-      fingerprintTree += tree.getXML(responses);
-    }
-
-    System.out.println("<responses>");
-    for (int i = 0; i < responses.size(); i++) {
-      System.out.println("<response id=\"" + i + "\">" + responses.get(i) + "</response>");
-    }
-    System.out.println("</responses>");
-
-
-    System.out.println("<tree>");
-    System.out.println(fingerprintTree);
-    System.out.println("</tree>");
-  }
 
   static String[] getResponseFiles(String responseFilesPath) {
     ArrayList<String> paths = new ArrayList<String>();
@@ -140,7 +116,7 @@ public class Main {
         } else {
           queries[queryIndex] = new Query();
           queries[queryIndex].header = strLine;
-          queries[queryIndex].nameClassType = br.readLine();
+          queries[queryIndex].nameTypeClass = br.readLine();
           queryIndex++;
           lineNum+=2;
         }

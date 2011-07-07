@@ -10,5 +10,5 @@
  */
 public class Query {
   String header;
-  String nameClassType;
+  String nameTypeClass;
 }

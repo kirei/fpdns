@@ -59,24 +59,26 @@ class Node {
     return sb.toString();
   }
 
-  String getPerlFPDNSFormat(ArrayList<String> responses) {
+  String getPerlFPDNSFormat(ArrayList<String> responses, HashMap<Integer, Integer> queriesArrayMap) {
     StringBuilder sb = new StringBuilder();
     String s;
     for (String r : children.keySet()) {
-      s = "{ fingerprint=>$iq[" + this.addResponseToArrayList(responses, r) + "], header=>$qy["+this.query+"]";
-      s += ", ruleset => [\n";
-      s += children.get(r).getPerlFPDNSFormat(responses);
+      int index = this.addQueryIndexToArrayMap(this.query, queriesArrayMap);
+      s = "{ fingerprint=>$iq[" + this.addResponseToArrayList(responses, r) + "], header=>$qy["+index+"], ";
+      s += "query=>$ntc["+index+"], ";
+      s += "ruleset => [\n";
+      s += children.get(r).getPerlFPDNSFormat(responses, queriesArrayMap);
       s += "]},\n";
       sb.append(s);
     }
 
     for (String r : this.uniqueHits.keySet()) {
-      s = "{ fingerprint => $iq[" +  this.addResponseToArrayList(responses, r) + "], result => { vendor =>\"VENDOR\", product=>\"" + this.uniqueHits.get(r).name + "\",version=>\"VERSION\"}, };\n";
+      s = "{ fingerprint => $iq[" +  this.addResponseToArrayList(responses, r) + "], result => { vendor =>\"VENDOR\", product=>\"" + this.uniqueHits.get(r).name + "\",version=>\"VERSION\"}, },\n";
       sb.append(s);
     }
 
     for (Object r : this.multipleHits.keySet()) {
-      s = "{ fingerprint => $iq[" +  this.addResponseToArrayList(responses, (String) r) + "], result => { vendor =>\"VENDOR\", product=>\"" + getServersString((List<DNSServer>) this.multipleHits.get(r)) + "\",version=>\"VERSION\"}, };\n";
+      s = "{ fingerprint => $iq[" +  this.addResponseToArrayList(responses, (String) r) + "], result => { vendor =>\"VENDOR\", product=>\"" + getServersString((List<DNSServer>) this.multipleHits.get(r)) + "\",version=>\"VERSION\"}, },\n";
       sb.append(s);
     }
 
@@ -88,6 +90,13 @@ class Node {
       responses.add(response);
     }
     return responses.indexOf(response);
+  }
+
+  int addQueryIndexToArrayMap(int queryIndex, HashMap<Integer, Integer> queriesArrayMap){
+    if(!queriesArrayMap.containsKey(queryIndex)){
+      queriesArrayMap.put(queryIndex, queriesArrayMap.size());
+    }
+    return queriesArrayMap.get(queryIndex);
   }
 
   String getServersString(List<DNSServer> servers) {
