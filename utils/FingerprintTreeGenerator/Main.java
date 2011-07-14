@@ -74,8 +74,8 @@ public class Main {
     }
     queryTree.growTree();
 
-    System.out.println(queryTree.getXML());
-    //System.out.println(queryTree.getPerlFPDNSFormat(allQueries));
+    //System.out.println(queryTree.getXML(allQueries));
+    System.out.println(queryTree.getPerlFPDNSFormat(allQueries));
   }
 
 
@@ -116,7 +116,7 @@ public class Main {
         } else {
           queries[queryIndex] = new Query();
           queries[queryIndex].header = strLine;
-          queries[queryIndex].nameTypeClass = br.readLine();
+          queries[queryIndex].nameClassType = br.readLine();
           queryIndex++;
           lineNum+=2;
         }

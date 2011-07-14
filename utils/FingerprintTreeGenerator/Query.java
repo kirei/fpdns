@@ -1,3 +1,6 @@
+
+import java.util.Map;
+
 /**
  *
  * @author sjobe
@@ -10,5 +13,5 @@
  */
 public class Query {
   String header;
-  String nameTypeClass;
+  String nameClassType;
 }
