@@ -64,15 +64,7 @@ class Node {
 
     StringBuilder sb = new StringBuilder();
     String s;
-    for (String r : children.keySet()) {
-      int index = this.addQueryIndexToArrayList(queryIndexes, this.query);
-      s = "{ fingerprint=>$iq[" + this.addResponseToArrayList(responses, r) + "], header=>$qy[" + index + "], ";
-      s += "query=>$nct[" + index + "], ";
-      s += "ruleset => [\n";
-      s += children.get(r).getPerlFPDNSFormat(responses, queryIndexes);
-      s += "]},\n";
-      sb.append(s);
-    }
+    this.addQueryIndexToArrayList(queryIndexes, this.query);
 
     for (String r : this.uniqueHits.keySet()) {
       s = "{ fingerprint => $iq[" + this.addResponseToArrayList(responses, r) + "], result => { vendor =>\"VENDOR\", product=>\"" + this.uniqueHits.get(r).name + "\",version=>\"VERSION\"}, },\n";
@@ -81,6 +73,16 @@ class Node {
 
     for (Object r : this.multipleHits.keySet()) {
       s = "{ fingerprint => $iq[" + this.addResponseToArrayList(responses, (String) r) + "], result => { vendor =>\"VENDOR\", product=>\"" + getServersString((List<DNSServer>) this.multipleHits.get(r)) + "\",version=>\"VERSION\"}, },\n";
+      sb.append(s);
+    }
+
+    for (String r : children.keySet()) {
+      int index = this.addQueryIndexToArrayList(queryIndexes, children.get(r).query);
+      s = "{ fingerprint=>$iq[" + this.addResponseToArrayList(responses, r) + "], header=>$qy[" + index + "], ";
+      s += "query=>$nct[" + index + "], ";
+      s += "ruleset => [\n";
+      s += children.get(r).getPerlFPDNSFormat(responses, queryIndexes);
+      s += "]},\n";
       sb.append(s);
     }
 
