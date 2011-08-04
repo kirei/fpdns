@@ -1,4 +1,3 @@
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -106,7 +105,7 @@ class Node {
   String getServersString(List<DNSServer> servers) {
     String s = "";
     for (DNSServer sv : servers) {
-      s += sv.name + ", ";//TODO: Use a stringbuilder here ?
+      s += sv.name + ", ";
     }
     return s;
   }

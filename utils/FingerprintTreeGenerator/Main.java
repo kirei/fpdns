@@ -24,7 +24,6 @@ public class Main {
     String[] serverResponseFilePaths = getResponseFiles(responseFilesPath);
     int numServers = serverResponseFilePaths.length;
     DNSServer servers[] = initServers(numServers, serverResponseFilePaths);
-    Query allQueries[] = getAllQueries(NUM_RESPONSES, queriesFilePath);
     int queryIndexes[] = getUniqueQueries(numServers, servers);
 
     //Find initial query
@@ -34,38 +33,11 @@ public class Main {
     List serverList;
     Set responses;
     Node node;
-    QueryTree queryTree = null;
-    for (int queryIndex : queryIndexes) {
-      serversGroupedByResponse = new MultiValueMap();
-      for (int i = 0; i < servers.length; i++) {
-        s = servers[i];
-        if (!s.isTreeNode) {
-          serversGroupedByResponse.put(s.responses[queryIndex], s);
-        }
-      }
-      responses = serversGroupedByResponse.keySet();
-      for (Object response : responses) {
-        serverList = ((List) serversGroupedByResponse.get(response));
-        if (serverList.size() == 1) {
-          matched = (DNSServer) serverList.get(0);
-          //System.out.println("If Query # " + queryIndex + " returns " + response + " then server is " + matched.name);
-          //TODO: If a query tree with that index already exists, add hit to that tree
-          node = new Node();
-          node.query = queryIndex;
-          node.uniqueHits.put((String) response, matched);
-          queryTree = new QueryTree(node, queryIndexes);
-
-          //queryTrees.add(qt);
-          matched.isTreeNode = true;
-        }
-      }
-      if (queryTree != null) {
-        //TODO: Refactor code later. Doing this so we only have 1 tree instead of multiple
-        break;
-      }
-    }
+    QueryTree queryTree = new QueryTree(new Node(), queryIndexes);
+    queryTree.allQueries = getAllQueries(NUM_RESPONSES, queriesFilePath);
 
     Node rootNode = queryTree.root;
+    rootNode.query = 0; //Todo: Find a better initial query
     for (int i = 0; i < servers.length; i++) {
       s = servers[i];
       if (!s.isTreeNode) {
@@ -74,8 +46,8 @@ public class Main {
     }
     queryTree.growTree();
 
-    //System.out.println(queryTree.getXML(allQueries));
-    System.out.println(queryTree.getPerlFPDNSFormat(allQueries));
+    //System.out.println(queryTree.getXML());
+    System.out.println(queryTree.getPerlFPDNSFormat());
   }
 
 

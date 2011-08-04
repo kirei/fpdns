@@ -15,6 +15,7 @@ public class QueryTree {
 
   Node root;
   int queries[];
+  Query[] allQueries;
 
   //TODO: Find a better place fot these constants 
   private static final Map<String, String> FPDNS_OPCODES =
@@ -94,7 +95,7 @@ public class QueryTree {
     this.growTree(root);
   }
 
-  public String getXML(Query[] allQueries) {
+  public String getXML() {
     ArrayList<String> responses = new ArrayList<String>();
     ArrayList<Integer> queryIndexes = new ArrayList<Integer>();
     String xml = "<?xml version=\"1.0\"?>\n";
@@ -118,7 +119,7 @@ public class QueryTree {
     return xml;
   }
 
-  public String getPerlFPDNSFormat(Query[] allQueries) {
+  public String getPerlFPDNSFormat() {
     ArrayList<String> responses = new ArrayList<String>();
 
     String initRule = "my %initrule = (header => $qy[0], query  => $nct[0], );\n";
@@ -161,6 +162,10 @@ public class QueryTree {
 
       List serverList = ((List) cur.multipleHits.get(response));
       for (int queryIndex : this.queries) {
+        if(this.allQueries[queryIndex].header.startsWith("0,6") || this.allQueries[queryIndex].header.startsWith("0,14")){
+          //System.out.println("Found");
+          continue;
+        }
         MultiValueMap nodeChildrenGroupedByResponse = new MultiValueMap();
         for (Object server : serverList) {
           nodeChildrenGroupedByResponse.put(((DNSServer) server).responses[queryIndex], server);
