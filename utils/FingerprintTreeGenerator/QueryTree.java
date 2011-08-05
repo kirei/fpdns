@@ -168,7 +168,18 @@ public class QueryTree {
         }
         MultiValueMap nodeChildrenGroupedByResponse = new MultiValueMap();
         for (Object server : serverList) {
-          nodeChildrenGroupedByResponse.put(((DNSServer) server).responses[queryIndex], server);
+          String rsp = ((DNSServer) server).responses[queryIndex];
+          //TODO: This is dirty, clean up later
+          if(rsp.startsWith("1,0,0,0,1,1,0,0,0")){
+            rsp = "1,0,0,0,1,1,0,0,0,.+,.+,.+,.+";
+          }else if(rsp.startsWith("1,0,0,0,0,1,0,0,0")){
+            rsp="1,0,0,0,0,1,0,0,0,.+,.+,.+,.+";
+          }else if(rsp.startsWith("1,0,0,0,0,1,0,1,0")){
+            rsp="1,0,0,0,0,1,0,1,0,.+,.+,.+,.+";
+          }else if(rsp.startsWith("1,0,0,1,1,1,0,0,0")){
+            rsp="1,0,0,1,1,1,0,0,0,.+,.+,.+,.+";
+          }
+          nodeChildrenGroupedByResponse.put(rsp, server);
         }
         //If query can split the group of servers, set up a new child node using the query
         //TODO: Instead of using the first query that can split the servers, use the best ?

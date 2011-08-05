@@ -1,3 +1,4 @@
+
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
@@ -26,13 +27,7 @@ public class Main {
     DNSServer servers[] = initServers(numServers, serverResponseFilePaths);
     int queryIndexes[] = getUniqueQueries(numServers, servers);
 
-    //Find initial query
-    MultiValueMap serversGroupedByResponse;
     DNSServer s;
-    DNSServer matched;
-    List serverList;
-    Set responses;
-    Node node;
     QueryTree queryTree = new QueryTree(new Node(), queryIndexes);
     queryTree.allQueries = getAllQueries(NUM_RESPONSES, queriesFilePath);
 
@@ -40,16 +35,26 @@ public class Main {
     rootNode.query = 0; //Todo: Find a better initial query
     for (int i = 0; i < servers.length; i++) {
       s = servers[i];
-      if (!s.isTreeNode) {
-        rootNode.multipleHits.put(s.responses[rootNode.query], s);
-      }
+          String rsp = s.responses[rootNode.query];
+          //TODO: This is dirty, clean up later
+          if(rsp.startsWith("1,0,0,0,1,1,0,0,0")){
+            rsp = "1,0,0,0,1,1,0,0,0,.+,.+,.+,.+";
+          }else if(rsp.startsWith("1,0,0,0,0,1,0,0,0")){
+            rsp="1,0,0,0,0,1,0,0,0,.+,.+,.+,.+";
+          }else if(rsp.startsWith("1,0,0,0,0,1,0,1,0")){
+            rsp="1,0,0,0,0,1,0,1,0,.+,.+,.+,.+";
+          }else if(rsp.startsWith("1,0,0,1,1,1,0,0,0")){
+            rsp="1,0,0,1,1,1,0,0,0,.+,.+,.+,.+";
+          }
+
+
+      rootNode.multipleHits.put(rsp, s);
     }
     queryTree.growTree();
 
     //System.out.println(queryTree.getXML());
     System.out.println(queryTree.getPerlFPDNSFormat());
   }
-
 
   static String[] getResponseFiles(String responseFilesPath) {
     ArrayList<String> paths = new ArrayList<String>();
@@ -90,14 +95,14 @@ public class Main {
           queries[queryIndex].header = strLine;
           queries[queryIndex].nameClassType = br.readLine();
           queryIndex++;
-          lineNum+=2;
+          lineNum += 2;
         }
       }
 
       in.close();
     } catch (Exception e) {
-      
-      System.err.println("Error: " + e.getMessage()+ e.toString());
+
+      System.err.println("Error: " + e.getMessage() + e.toString());
     }
     return queries;
   }

@@ -10,11 +10,9 @@ import java.io.InputStreamReader;
 class DNSServer {
   String name;
   String[] responses;
-  boolean isTreeNode;
 
   DNSServer(int numResponses, String filePath){
     responses = new String[numResponses];
-    isTreeNode = false;
  try{
 
     FileInputStream fstream = new FileInputStream(filePath);
