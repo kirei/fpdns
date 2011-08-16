@@ -196,7 +196,7 @@ push @s, "[$r{option}]" if(defined $r{option});
 
 push @s, $r{vstring} if(defined $r{vstring});
 
-push @s, "($r{state};$r{id})" if($self->{debug});
+push @s, $r{state} if ($self->{debug});
 
 return join(" ", @s);
 }
@@ -301,6 +301,7 @@ for my $rule (@$ruleref) {
       $ret{product} = $rule->{result}{product};
       $ret{version} = $rule->{result}{version};
       $ret{option}  = $rule->{result}{option};
+      $ret{state}   = $rule->{result}{state};
     } else {
     $ret{result} = $rule->{result};
   }
