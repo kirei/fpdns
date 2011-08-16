@@ -50,7 +50,7 @@ qchaos   => 0,
 
 my $versionlength = 40;
 
-require "fingerprint.pl"
+require "fingerprint.pl";
 
 ######################################################################
 
@@ -129,6 +129,7 @@ sub query_version
   my $resolver = Net::DNS::Resolver->new;
 
   $resolver->nameservers($qserver);
+  $resolver->recurse($header->rd);
   $resolver->port($qport);
   $resolver->srcaddr($self->{source});
   $resolver->retry($self->{retry});
