@@ -196,7 +196,7 @@ push @s, "[$r{option}]" if(defined $r{option});
 
 push @s, $r{vstring} if(defined $r{vstring});
 
-push @s, $r{state} if ($self->{debug});
+push @s, $r{state} if (defined $r{state} && $self->{debug});
 
 return join(" ", @s);
 }
