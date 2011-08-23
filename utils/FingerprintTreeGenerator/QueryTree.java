@@ -18,7 +18,7 @@ public class QueryTree {
   Query[] allQueries;
 
   //TODO: Find a better place fot these constants 
-  private static final Map<String, String> FPDNS_OPCODES =
+   static final Map<String, String> FPDNS_OPCODES =
           Collections.unmodifiableMap(new HashMap<String, String>() {
 
     {
@@ -30,7 +30,7 @@ public class QueryTree {
     }
   });
 
-  private static final Map<String, String> FPDNS_RCODES =
+  static final Map<String, String> FPDNS_RCODES =
           Collections.unmodifiableMap(new HashMap<String, String>() {
 
     {
@@ -48,7 +48,7 @@ public class QueryTree {
     }
   });
 
-  private static final Map<String, String> FPDNS_CLASSES =
+  static final Map<String, String> FPDNS_CLASSES =
           Collections.unmodifiableMap(new HashMap<String, String>() {
 
     {
@@ -60,7 +60,7 @@ public class QueryTree {
     }
   });
 
-  private static final Map<String, String> FPDNS_TYPES =
+  static final Map<String, String> FPDNS_TYPES =
           Collections.unmodifiableMap(new HashMap<String, String>() {
 
     {
@@ -162,10 +162,11 @@ public class QueryTree {
 
       List serverList = ((List) cur.multipleHits.get(response));
       for (int queryIndex : this.queries) {
-        if(this.allQueries[queryIndex].header.startsWith("0,6") || this.allQueries[queryIndex].header.startsWith("0,14")){
-          //System.out.println("Found");
+        //If an opcode is not supported by FPDNS, then skip it
+        if(!FPDNS_OPCODES.containsKey(this.allQueries[queryIndex].getOpcode())){
           continue;
         }
+        
         MultiValueMap nodeChildrenGroupedByResponse = new MultiValueMap();
         for (Object server : serverList) {
           String rsp = ((DNSServer) server).responses[queryIndex];

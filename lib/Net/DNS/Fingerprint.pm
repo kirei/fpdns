@@ -62,6 +62,7 @@ my @qy = (
 "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy9
 );
 
+
 my @nct = (
 ". IN A",    #nct0
 ". IN A",    #nct1

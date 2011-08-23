@@ -1,6 +1,4 @@
 
-import java.util.Map;
-
 /**
  *
  * @author sjobe
@@ -12,6 +10,19 @@ import java.util.Map;
  *
  */
 public class Query {
+
   String header;
   String nameClassType;
+  String[] headerArray;
+
+  public String[] getHeaderArray() {
+    if (headerArray == null) {
+      this.headerArray = header.split(",");
+    }
+    return this.headerArray;
+  }
+
+  public String getOpcode() {
+    return this.getHeaderArray()[1].replaceAll(" ", "");
+  }
 }

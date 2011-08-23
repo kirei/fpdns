@@ -32,7 +32,12 @@ public class Main {
     queryTree.allQueries = getAllQueries(NUM_RESPONSES, queriesFilePath);
 
     Node rootNode = queryTree.root;
-    rootNode.query = 0; //Todo: Find a better initial query
+    for(int i=0; i<queryTree.allQueries.length; i++){
+      if(queryTree.FPDNS_OPCODES.containsKey(queryTree.allQueries[i].getOpcode())){
+        rootNode.query = i;
+        break;
+      }
+    }
     for (int i = 0; i < servers.length; i++) {
       s = servers[i];
           String rsp = s.responses[rootNode.query];
