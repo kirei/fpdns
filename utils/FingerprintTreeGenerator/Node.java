@@ -32,16 +32,16 @@ class Node {
       sb.append("<response id=\"");
       sb.append(this.addResponseToArrayList(responses, r));
       sb.append("\">");
-      sb.append(this.uniqueHits.get(r).name);
+      sb.append(this.uniqueHits.get(r).product);
       sb.append("</response>\n");
     }
 
     for (Object r : this.multipleHits.keySet()) {
-
+      DNSServer combinedInfo = DNSServer.getCombinedServerInformation((List<DNSServer>) this.multipleHits.get(r));
       sb.append("<response id=\"");
       sb.append(this.addResponseToArrayList(responses, (String) r));
       sb.append("\">");
-      sb.append(getServersString((List<DNSServer>) this.multipleHits.get(r)));
+      sb.append(combinedInfo.version);
       sb.append("</response>\n");
     }
 
@@ -66,12 +66,14 @@ class Node {
     this.addQueryIndexToArrayList(queryIndexes, this.query);
 
     for (String r : this.uniqueHits.keySet()) {
-      s = "{ fingerprint => $iq[" + this.addResponseToArrayList(responses, r) + "], result => { vendor =>\"VENDOR\", product=>\"" + this.uniqueHits.get(r).name + "\",version=>\"VERSION\"}, },\n";
+      DNSServer serverInfo = this.uniqueHits.get(r);
+      s = "{ fingerprint => $iq[" + this.addResponseToArrayList(responses, r) + "], result => { vendor =>\""+serverInfo.vendor+"\", product=>\"" + serverInfo.product + "\", version=>\""+serverInfo.version+"\"}, },\n";
       sb.append(s);
     }
 
     for (Object r : this.multipleHits.keySet()) {
-      s = "{ fingerprint => $iq[" + this.addResponseToArrayList(responses, (String) r) + "], result => { vendor =>\"VENDOR\", product=>\"" + getServersString((List<DNSServer>) this.multipleHits.get(r)) + "\",version=>\"VERSION\"}, },\n";
+      DNSServer combinedInfo = DNSServer.getCombinedServerInformation((List<DNSServer>) this.multipleHits.get(r));
+      s = "{ fingerprint => $iq[" + this.addResponseToArrayList(responses, (String) r) + "], result => { vendor =>\""+combinedInfo.vendor+"\", product=>\"" + combinedInfo.product + "\", version=>\""+combinedInfo.version+"\"}, },\n";
       sb.append(s);
     }
 
@@ -100,13 +102,5 @@ class Node {
       queries.add(queryIndex);
     }
     return queries.indexOf(queryIndex);
-  }
-
-  String getServersString(List<DNSServer> servers) {
-    String s = "";
-    for (DNSServer sv : servers) {
-      s += sv.name + ", ";
-    }
-    return s;
   }
 }
