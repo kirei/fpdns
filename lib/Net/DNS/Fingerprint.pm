@@ -128,7 +128,7 @@ my @ruleset = (
   ]},
 { fingerprint=>$iq[16], header=>$qy[8], query=>$nct[8], ruleset => [
   { fingerprint => $iq[12], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.4.10 -- 1.4.12"}, },
-  { fingerprint=>$iq[17], header=>$qy[9], query=>$nct[9], ruleset => [
+  { fingerprint=>"header section incomplete", header=>$qy[9], query=>$nct[9], ruleset => [
     { fingerprint => $iq[6], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.4.1 -- 1.4.9"}, },
     { fingerprint => $iq[18], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.3.0 -- 1.4.0"}, },
     ]},
