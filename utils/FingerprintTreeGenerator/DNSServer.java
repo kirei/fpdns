@@ -51,9 +51,9 @@ class DNSServer {
   private void setServerInformation(String information){
       if(information.contains("|")){
         String[] info = information.split(Pattern.quote("|"));
-        this.vendor = info[0].replaceAll(" ", "");
-        this.product = info[1].replaceAll(" ", "");
-        this.version = info[2].replaceAll(" ", "");
+        this.vendor = info[0].trim();
+        this.product = info[1].trim();
+        this.version = info[2].trim();
     }else{
         this.vendor = "";
         this.product = information;

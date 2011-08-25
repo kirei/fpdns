@@ -23,6 +23,6 @@ public class Query {
   }
 
   public String getOpcode() {
-    return this.getHeaderArray()[1].replaceAll(" ", "");
+    return this.getHeaderArray()[1].trim();
   }
 }

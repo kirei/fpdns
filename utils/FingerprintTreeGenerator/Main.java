@@ -40,18 +40,8 @@ public class Main {
     }
     for (int i = 0; i < servers.length; i++) {
       s = servers[i];
-          String rsp = s.responses[rootNode.query];
-          //TODO: This is dirty, clean up later
-          if(rsp.startsWith("1,0,0,0,1,1,0,0,0")){
-            rsp = "1,0,0,0,1,1,0,0,0,.+,.+,.+,.+";
-          }else if(rsp.startsWith("1,0,0,0,0,1,0,0,0")){
-            rsp="1,0,0,0,0,1,0,0,0,.+,.+,.+,.+";
-          }else if(rsp.startsWith("1,0,0,0,0,1,0,1,0")){
-            rsp="1,0,0,0,0,1,0,1,0,.+,.+,.+,.+";
-          }else if(rsp.startsWith("1,0,0,1,1,1,0,0,0")){
-            rsp="1,0,0,1,1,1,0,0,0,.+,.+,.+,.+";
-          }
-
+      String rsp = s.responses[rootNode.query];
+      rsp = QueryTree.normalizeResponseString(rsp);
 
       rootNode.multipleHits.put(rsp, s);
     }

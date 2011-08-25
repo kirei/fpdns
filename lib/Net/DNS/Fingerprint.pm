@@ -62,7 +62,6 @@ my @qy = (
 "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy9
 );
 
-
 my @nct = (
 ". IN A",    #nct0
 ". IN A",    #nct1
@@ -78,12 +77,12 @@ my @nct = (
 
 my %initrule = (header => $qy[0], query  => $nct[0], );
 my @iq = (
-"1,QUERY,0,0,0,0,0,0,SERVFAIL,1,0,0,0",    #iq0
-"1,QUERY,0,0,0,0,0,0,NOERROR,1,0,13,0",    #iq1
+"1,QUERY,0,0,0,0,0,0,NOERROR,.+,.+,.+,.+",    #iq0
+"1,QUERY,0,0,0,0,0,0,SERVFAIL,1,0,0,0",    #iq1
 "1,QUERY,0,0,0,1,0,0,NOERROR,.+,.+,.+,.+",    #iq2
 "1,NS_NOTIFY_OP,0,0,0,1,0,0,REFUSED,1,0,0,0",    #iq3
 "1,NS_NOTIFY_OP,0,0,0,1,0,0,SERVFAIL,1,0,0,0",    #iq4
-"1,QUERY,0,0,1,1,0,0,NOTIMP,1,0,1,0",    #iq5
+"1,QUERY,0,0,1,1,0,0,NOTIMP,.+,.+,.+,.+",    #iq5
 "1,QUERY,0,0,1,1,0,0,NOERROR,.+,.+,.+,.+",    #iq6
 "1,NS_NOTIFY_OP,0,0,0,1,0,0,FORMERR,1,0,0,0",    #iq7
 "1,STATUS,0,0,1,1,0,0,NOTIMP,0,0,0,0",    #iq8
@@ -99,41 +98,41 @@ my @iq = (
 "1,QUERY,0,0,1,1,0,0,REFUSED,1,0,0,0",    #iq18
 );
 my @ruleset = (
-{ fingerprint => $iq[0], result => { vendor =>"NLnetLabs", product=>"NSD", version=>"3.1.0 -- 3.2.8"}, },
-{ fingerprint => $iq[1], result => { vendor =>"", product=>"SuperDNS", version=>""}, },
+{ fingerprint => $iq[0], result => { vendor =>"", product=>"SuperDNS", version=>""}, },
+{ fingerprint => $iq[1], result => { vendor =>"NLnetLabs", product=>"NSD", version=>"3.1.0 -- 3.2.8"}, },
 { fingerprint=>$iq[2], header=>$qy[1], query=>$nct[1], ruleset => [
-  { fingerprint => $iq[3], result => { vendor =>"ISC", product=>"BIND", version=>"9.1.1 -- 9.1.3"}, },
-  { fingerprint=>$iq[4], header=>$qy[2], query=>$nct[2], ruleset => [
-    { fingerprint => $iq[5], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.0rc3"}, },
-    { fingerprint => $iq[6], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.0 -- 9.2.2-P3"}, },
-    ]},
-  { fingerprint=>$iq[7], header=>$qy[3], query=>$nct[3], ruleset => [
-    { fingerprint => $iq[8], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.3 -- 9.2.9"}, },
-    { fingerprint=>$iq[9], header=>$qy[4], query=>$nct[4], ruleset => [
-      { fingerprint=>$iq[10], header=>$qy[5], query=>$nct[5], ruleset => [
-        { fingerprint => $iq[11], result => { vendor =>"ISC", product=>"BIND", version=>"9.7.2"}, },
-        { fingerprint => $iq[12], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.3 -- 9.7.3"}, },
-        ]},
-      { fingerprint=>$iq[13], header=>$qy[6], query=>$nct[6], ruleset => [
-        { fingerprint => $iq[2], result => { vendor =>"ISC", product=>"BIND", version=>"9.3.0 -- 9.3.6-P1"}, },
-        { fingerprint=>$iq[14], header=>$qy[7], query=>$nct[7], ruleset => [
-          { fingerprint => $iq[15], result => { vendor =>"ISC", product=>"BIND", version=>"9.4.0 -- 9.5.1"}, },
-          { fingerprint=>$iq[6], header=>$qy[5], query=>$nct[5], ruleset => [
-            { fingerprint => $iq[11], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.0"}, },
-            { fingerprint => $iq[12], result => { vendor =>"ISC", product=>"BIND", version=>"9.5.2 -- 9.7.1"}, },
-            ]},
-          ]},
-        ]},
-      ]},
-    ]},
-  ]},
+{ fingerprint => $iq[3], result => { vendor =>"ISC", product=>"BIND", version=>"9.1.1 -- 9.1.3"}, },
+{ fingerprint=>$iq[4], header=>$qy[2], query=>$nct[2], ruleset => [
+{ fingerprint => $iq[5], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.0rc3"}, },
+{ fingerprint => $iq[6], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.0 -- 9.2.2-P3"}, },
+]},
+{ fingerprint=>$iq[7], header=>$qy[3], query=>$nct[3], ruleset => [
+{ fingerprint => $iq[8], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.3 -- 9.2.9"}, },
+{ fingerprint=>$iq[9], header=>$qy[4], query=>$nct[4], ruleset => [
+{ fingerprint=>$iq[10], header=>$qy[5], query=>$nct[5], ruleset => [
+{ fingerprint => $iq[11], result => { vendor =>"ISC", product=>"BIND", version=>"9.7.2"}, },
+{ fingerprint => $iq[12], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.3 -- 9.7.3"}, },
+]},
+{ fingerprint=>$iq[13], header=>$qy[6], query=>$nct[6], ruleset => [
+{ fingerprint => $iq[2], result => { vendor =>"ISC", product=>"BIND", version=>"9.3.0 -- 9.3.6-P1"}, },
+{ fingerprint=>$iq[14], header=>$qy[7], query=>$nct[7], ruleset => [
+{ fingerprint => $iq[15], result => { vendor =>"ISC", product=>"BIND", version=>"9.4.0 -- 9.5.1"}, },
+{ fingerprint=>$iq[6], header=>$qy[5], query=>$nct[5], ruleset => [
+{ fingerprint => $iq[11], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.0"}, },
+{ fingerprint => $iq[12], result => { vendor =>"ISC", product=>"BIND", version=>"9.5.2 -- 9.7.1"}, },
+]},
+]},
+]},
+]},
+]},
+]},
 { fingerprint=>$iq[16], header=>$qy[8], query=>$nct[8], ruleset => [
-  { fingerprint => $iq[12], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.4.10 -- 1.4.12"}, },
-  { fingerprint=>"header section incomplete", header=>$qy[9], query=>$nct[9], ruleset => [
-    { fingerprint => $iq[6], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.4.1 -- 1.4.9"}, },
-    { fingerprint => $iq[18], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.3.0 -- 1.4.0"}, },
-    ]},
-  ]},
+{ fingerprint => $iq[12], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.4.10 -- 1.4.12"}, },
+{ fingerprint=>$iq[17], header=>$qy[9], query=>$nct[9], ruleset => [
+{ fingerprint => $iq[6], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.4.1 -- 1.4.9"}, },
+{ fingerprint => $iq[18], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.3.0 -- 1.4.0"}, },
+]},
+]},
 );
 
 ######################################################################

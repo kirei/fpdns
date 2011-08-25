@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.collections.map.MultiValueMap;
 
 /**
@@ -170,16 +172,9 @@ public class QueryTree {
         MultiValueMap nodeChildrenGroupedByResponse = new MultiValueMap();
         for (Object server : serverList) {
           String rsp = ((DNSServer) server).responses[queryIndex];
-          //TODO: This is dirty, clean up later
-          if(rsp.startsWith("1,0,0,0,1,1,0,0,0")){
-            rsp = "1,0,0,0,1,1,0,0,0,.+,.+,.+,.+";
-          }else if(rsp.startsWith("1,0,0,0,0,1,0,0,0")){
-            rsp="1,0,0,0,0,1,0,0,0,.+,.+,.+,.+";
-          }else if(rsp.startsWith("1,0,0,0,0,1,0,1,0")){
-            rsp="1,0,0,0,0,1,0,1,0,.+,.+,.+,.+";
-          }else if(rsp.startsWith("1,0,0,1,1,1,0,0,0")){
-            rsp="1,0,0,1,1,1,0,0,0,.+,.+,.+,.+";
-          }
+
+          rsp = QueryTree.normalizeResponseString(rsp);
+          
           nodeChildrenGroupedByResponse.put(rsp, server);
         }
         //If query can split the group of servers, set up a new child node using the query
@@ -229,7 +224,7 @@ public class QueryTree {
     return join(h, ",");
   }
 
-    public static String getNCT(String nct, Map<String, String> classes, Map<String, String> types) {
+  public static String getNCT(String nct, Map<String, String> classes, Map<String, String> types) {
     String nctArray[] = nct.split("\\s+");
     if (classes.containsKey(nctArray[1])) {
       nctArray[1] = classes.get(nctArray[1]);
@@ -241,7 +236,6 @@ public class QueryTree {
 
     return join(nctArray, " ");
   }
-
 
   public static String join(String[] ary, String delim) {
     String out = "";
@@ -261,4 +255,28 @@ public class QueryTree {
     }
     return join(h, ",");
   }
+
+  public static String normalizeResponseString(String response){
+    if(!response.matches(".*[10],[0],[0],[0]")){
+      int pos = QueryTree.findNthIndexOf (response, ",", 9);
+      response = response.substring(0,pos)+",.+,.+,.+,.+";
+    }
+    return response;
+  }
+
+  public static int findNthIndexOf (String str, String needle, int occurence)
+            throws IndexOutOfBoundsException {
+    int index = -1;
+    Pattern p = Pattern.compile(needle, Pattern.MULTILINE);
+    Matcher m = p.matcher(str);
+    while(m.find()) {
+        if (--occurence == 0) {
+            index = m.start();
+            break;
+        }
+    }
+    if (index < 0) throw new IndexOutOfBoundsException();
+    return index;
+}
+
 }
