@@ -33,7 +33,7 @@ public class Main {
 
     Node rootNode = queryTree.root;
     for(int i=0; i<queryTree.allQueries.length; i++){
-      if(queryTree.FPDNS_OPCODES.containsKey(queryTree.allQueries[i].getOpcode())){
+      if(FPDNSConstants.OPCODES.containsKey(queryTree.allQueries[i].getOpcode())){
         rootNode.query = i;
         break;
       }

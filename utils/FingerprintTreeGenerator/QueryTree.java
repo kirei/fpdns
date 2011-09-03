@@ -17,76 +17,7 @@ public class QueryTree {
 
   Node root;
   int queries[];
-  Query[] allQueries;
-
-  //TODO: Find a better place fot these constants 
-   static final Map<String, String> FPDNS_OPCODES =
-          Collections.unmodifiableMap(new HashMap<String, String>() {
-
-    {
-      put("0", "QUERY");
-      put("1", "IQUERY");
-      put("2", "STATUS");
-      put("4", "NS_NOTIFY_OP");
-      put("5", "UPDATE");
-    }
-  });
-
-  static final Map<String, String> FPDNS_RCODES =
-          Collections.unmodifiableMap(new HashMap<String, String>() {
-
-    {
-      put("0", "NOERROR");
-      put("1", "FORMERR");
-      put("2", "SERVFAIL");
-      put("3", "NXDOMAIN");
-      put("4", "NOTIMP");
-      put("5", "REFUSED");
-      put("6", "YXDOMAIN");
-      put("7", "YXRRSET");
-      put("8", "NXRRSET");
-      put("9", "NOTAUTH");
-      put("10", "NOTZONE");
-    }
-  });
-
-  static final Map<String, String> FPDNS_CLASSES =
-          Collections.unmodifiableMap(new HashMap<String, String>() {
-
-    {
-      put("1", "IN");
-      put("3", "CH");
-      put("4", "HS");
-      put("254", "NONE");
-      put("255", "ANY");
-    }
-  });
-
-  static final Map<String, String> FPDNS_TYPES =
-          Collections.unmodifiableMap(new HashMap<String, String>() {
-
-    {
-      put("1", "A");
-      put("2", "NS");
-      put("3", "MD");
-      put("5", "CNAME");
-      put("6", "SOA");
-      put("13", "HINFO");
-      put("28", "AAAA");
-      put("30", "NTX");
-      put("39", "DNAME");
-      put("46", "RRSIG");
-      put("47", "NSEC");
-      put("48", "DNSKEY");
-      put("249", "TKEY");
-      put("250", "TSIG");
-      put("251", "IXFR");
-      put("252", "AXFR");
-      // There are 8 types implemented in the collector that do not appear in the %typesbyname array of
-      // the perl dns libray. Need to investigate what happens when these are used in queries
-
-    }
-  });
+  Query[] allQueries;   
 
   QueryTree(Node n, int qrs[]) {
     this.root = n;
@@ -134,7 +65,7 @@ public class QueryTree {
     String iq = "my @iq = (\n";
     int count = 0;
     for (String response : responses) {
-      iq += "\"" + getHeader(response, FPDNS_OPCODES, FPDNS_RCODES) + "\",    #iq" + count + "\n";
+      iq += "\"" + getHeader(response, FPDNSConstants.OPCODES, FPDNSConstants.RCODES) + "\",    #iq" + count + "\n";
       count++;
     }
     iq += ");\n";
@@ -142,7 +73,7 @@ public class QueryTree {
     count = 0;
     String qy = "my @qy = (\n";
     for (int j = 0; j < queryIndexes.size(); j++) {
-      qy += "\"" + zeroHeaderCounts(getHeader(allQueries[queryIndexes.get(j)].header, FPDNS_OPCODES, FPDNS_RCODES)) + "\",    #qy" + count + "\n";
+      qy += "\"" + zeroHeaderCounts(getHeader(allQueries[queryIndexes.get(j)].header, FPDNSConstants.OPCODES, FPDNSConstants.RCODES)) + "\",    #qy" + count + "\n";
       count++;
     }
     qy += ");\n\n";
@@ -150,7 +81,7 @@ public class QueryTree {
     count = 0;
     String nct = "my @nct = (\n";
     for (int j = 0; j < queryIndexes.size(); j++) {
-      nct += "\"" + getNCT(allQueries[queryIndexes.get(j)].nameClassType, FPDNS_CLASSES, FPDNS_TYPES) + "\",    #nct" + count + "\n";
+      nct += "\"" + getNCT(allQueries[queryIndexes.get(j)].nameClassType, FPDNSConstants.CLASSES, FPDNSConstants.TYPES) + "\",    #nct" + count + "\n";
       count++;
     }
     nct += ");\n\n";
@@ -165,7 +96,7 @@ public class QueryTree {
       List serverList = ((List) cur.multipleHits.get(response));
       for (int queryIndex : this.queries) {
         //If an opcode is not supported by FPDNS, then skip it
-        if(!FPDNS_OPCODES.containsKey(this.allQueries[queryIndex].getOpcode())){
+        if(!FPDNSConstants.OPCODES.containsKey(this.allQueries[queryIndex].getOpcode())){
           continue;
         }
         

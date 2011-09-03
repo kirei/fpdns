@@ -60,10 +60,10 @@ class Node {
   }
 
   String getPerlFPDNSFormat(ArrayList<String> responses, ArrayList<Integer> queryIndexes) {
-
     StringBuilder sb = new StringBuilder();
     String s;
     this.addQueryIndexToArrayList(queryIndexes, this.query);
+    
 
     for (String r : this.uniqueHits.keySet()) {
       DNSServer serverInfo = this.uniqueHits.get(r);
