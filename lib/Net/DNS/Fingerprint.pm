@@ -49,6 +49,7 @@ qchaos   => 0,
 );
 
 my $versionlength = 40;
+
 my @qy = (
 "0,QUERY,0,0,0,0,0,0,NOERROR,0,0,0,0",    #qy0
 "0,NS_NOTIFY_OP,1,1,0,1,0,0,NOERROR,0,0,0,0",    #qy1
@@ -105,6 +106,7 @@ my @ruleset = (
   { fingerprint=>$iq[4], header=>$qy[2], query=>$nct[2], ruleset => [
     { fingerprint => $iq[5], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.0rc3"}, },
     { fingerprint => $iq[6], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.0 -- 9.2.2-P3"}, },
+    { fingerprint => ".+", state=>"q0r2q1r4q2r?" },
     ]},
   { fingerprint=>$iq[7], header=>$qy[3], query=>$nct[3], ruleset => [
     { fingerprint => $iq[8], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.3 -- 9.2.9"}, },
@@ -112,6 +114,7 @@ my @ruleset = (
       { fingerprint=>$iq[10], header=>$qy[5], query=>$nct[5], ruleset => [
         { fingerprint => $iq[11], result => { vendor =>"ISC", product=>"BIND", version=>"9.7.2"}, },
         { fingerprint => $iq[12], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.3 -- 9.7.3"}, },
+        { fingerprint => ".+", state=>"q0r2q1r4r7q3r9q4r10q5r?" },
         ]},
       { fingerprint=>$iq[13], header=>$qy[6], query=>$nct[6], ruleset => [
         { fingerprint => $iq[2], result => { vendor =>"ISC", product=>"BIND", version=>"9.3.0 -- 9.3.6-P1"}, },
@@ -120,6 +123,7 @@ my @ruleset = (
           { fingerprint=>$iq[6], header=>$qy[5], query=>$nct[5], ruleset => [
             { fingerprint => $iq[11], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.0"}, },
             { fingerprint => $iq[12], result => { vendor =>"ISC", product=>"BIND", version=>"9.5.2 -- 9.7.1"}, },
+            { fingerprint => ".+", state=>"q0r2q1r4r7q3r9q4r10r13q6r14q7r6q5r?" },
             ]},
           ]},
         ]},
@@ -131,6 +135,7 @@ my @ruleset = (
   { fingerprint=>$iq[17], header=>$qy[9], query=>$nct[9], ruleset => [
     { fingerprint => $iq[6], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.4.1 -- 1.4.9"}, },
     { fingerprint => $iq[18], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.3.0 -- 1.4.0"}, },
+    { fingerprint => ".+", state=>"q0r2r16q8r17q9r?" },
     ]},
   ]},
 );
