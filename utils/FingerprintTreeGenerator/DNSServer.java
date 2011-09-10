@@ -45,7 +45,6 @@ class DNSServer {
   }
 
   DNSServer(){
-    
   }
 
   private void setServerInformation(String information){

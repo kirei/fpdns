@@ -59,11 +59,11 @@ class Node {
     return sb.toString();
   }
 
-  String getPerlFPDNSFormat(ArrayList<String> responses, ArrayList<Integer> queryIndexes) {
+  String getPerlFPDNSFormat(ArrayList<String> responses, ArrayList<Integer> queryIndexes, String state) {
     StringBuilder sb = new StringBuilder();
     String s;
-    this.addQueryIndexToArrayList(queryIndexes, this.query);
-    
+    int qi = this.addQueryIndexToArrayList(queryIndexes, this.query);
+    state += "q"+qi;
 
     for (String r : this.uniqueHits.keySet()) {
       DNSServer serverInfo = this.uniqueHits.get(r);
@@ -79,14 +79,20 @@ class Node {
 
     for (String r : children.keySet()) {
       int index = this.addQueryIndexToArrayList(queryIndexes, children.get(r).query);
-      s = "{ fingerprint=>$iq[" + this.addResponseToArrayList(responses, r) + "], header=>$qy[" + index + "], ";
+      int ri = this.addResponseToArrayList(responses, r);
+      state+="r"+ri;
+      s = "{ fingerprint=>$iq[" + ri + "], header=>$qy[" + index + "], ";
       s += "query=>$nct[" + index + "], ";
       s += "ruleset => [\n";
-      s += children.get(r).getPerlFPDNSFormat(responses, queryIndexes);
+      s += children.get(r).getPerlFPDNSFormat(responses, queryIndexes, state);
       s += "]},\n";
       sb.append(s);
     }
-
+    if(state.matches(".+q[\\d]+$")){
+      state+= "r?";
+      s = "{ fingerprint => \".+\", state=>\""+state+"\" },\n";
+      sb.append(s);
+    }
     return sb.toString();
   }
 

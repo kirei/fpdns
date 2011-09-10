@@ -57,9 +57,10 @@ public class QueryTree {
 
     String initRule = "my %initrule = (header => $qy[0], query  => $nct[0], );\n";
     String ruleSet = "my @ruleset = (\n";
+    String state = "";
     ArrayList<Integer> queryIndexes = new ArrayList<Integer>();
     this.root.addQueryIndexToArrayList(queryIndexes, this.root.query);
-    ruleSet += this.root.getPerlFPDNSFormat(responses, queryIndexes);
+    ruleSet += this.root.getPerlFPDNSFormat(responses, queryIndexes, state);
     ruleSet += ");\n";
 
     String iq = "my @iq = (\n";
