@@ -50,6 +50,8 @@ qchaos   => 0,
 
 my $versionlength = 40;
 
+my $ignore_recurse = 0;
+
 my @qy = (
 "0,QUERY,0,0,0,0,0,0,NOERROR,0,0,0,0",    #qy0
 "0,NS_NOTIFY_OP,1,1,0,1,0,0,NOERROR,0,0,0,0",    #qy1
@@ -132,7 +134,7 @@ my @ruleset = (
   ]},
 { fingerprint=>$iq[16], header=>$qy[8], query=>$nct[8], ruleset => [
   { fingerprint => $iq[12], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.4.10 -- 1.4.12"}, },
-  { fingerprint=>$iq[17], header=>$qy[9], query=>$nct[9], ruleset => [
+  { fingerprint=>"header section incomplete", header=>$qy[9], query=>$nct[9], ruleset => [
     { fingerprint => $iq[6], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.4.1 -- 1.4.9"}, },
     { fingerprint => $iq[18], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.3.0 -- 1.4.0"}, },
     { fingerprint => ".+", state=>"q0r2r16q8r17q9r?" },
@@ -155,7 +157,6 @@ my @qy_old = (
 
 my %old_initrule = (header => $qy_old[2], query => ". IN MAILB",);
 
-# my %initrule = (header => $qy_old[0], query  => ". IN A", );
 my @iq_old = (
     "1,IQUERY,0,0,1,0,0,0,FORMERR,0,0,0,0",    # iq_old0
     "1,IQUERY,0,0,1,0,0,0,FORMERR,1,0,0,0",    # iq_old1
@@ -1749,6 +1750,8 @@ sub init
   $initrule{header}, $initrule{query}, \@ruleset);
 
   if(!defined $match{product}){
+    #For backwards compatibility with old fingerprint code which never set the rd
+    $ignore_recurse = 1;
     my %old_match = $self->process($qserver, $qport,
     $old_initrule{header}, $old_initrule{query}, \@old_ruleset);
 
@@ -1921,7 +1924,9 @@ sub probe
 
   my $resolver =  Net::DNS::Resolver->new;
   $resolver->nameservers($qserver);
-  $resolver->recurse($header->rd);
+  if(!$ignore_recurse){
+    $resolver->recurse($header->rd);
+  }
   $resolver->port($qport);
   $resolver->srcaddr($self->{source});
   $resolver->retry($self->{retry});
