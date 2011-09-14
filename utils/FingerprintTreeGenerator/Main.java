@@ -20,7 +20,7 @@ public class Main {
       System.out.println("Missing arguments. Specify paths to response files and query file");
       return;
     }
-   if (args.length == 1) {
+    if (args.length == 1) {
       System.out.println("Missing argument. Specify path to response files directory");
       return;
     }
@@ -87,7 +87,6 @@ public class Main {
       int queryIndex = 0;
       while ((strLine = br.readLine()) != null) {
         if (lineNum == 0) {
-          //TODO: Make sure the response file version is compatible with this collector
           lineNum++;
         } else {
           queries[queryIndex] = new Query();
