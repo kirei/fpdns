@@ -17,7 +17,11 @@ public class Main {
 
   public static void main(String[] args) {
     if (args.length == 0) {
-      System.out.println("Missing arguments. Pass in path to response files and query file");
+      System.out.println("Missing arguments. Specify paths to response files and query file");
+      return;
+    }
+   if (args.length == 1) {
+      System.out.println("Missing argument. Specify path to response files directory");
       return;
     }
     String queriesFilePath = args[0];
