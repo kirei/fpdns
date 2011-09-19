@@ -1,0 +1,6 @@
+You will need to download and install libvdns, the Vantages DNS C++ API from
+http://www.vantage-points.org/download.html. Follow the instructions here
+http://www.vantage-points.org/libvdns.html to install the library.
+
+
+
