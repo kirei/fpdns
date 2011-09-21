@@ -54,15 +54,15 @@ my $ignore_recurse = 0;
 
 my @qy = (
 "0,QUERY,0,0,0,0,0,0,NOERROR,0,0,0,0",    #qy0
-"0,QUERY,1,0,0,0,1,0,NOTIMP,0,0,0,0",    #qy1
-"0,NS_NOTIFY_OP,1,0,0,1,0,0,NOTIMP,0,0,0,0",    #qy2
-"0,QUERY,1,0,1,0,1,1,NOERROR,0,0,0,0",    #qy3
-"0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy4
-"0,IQUERY,0,0,1,1,1,0,NOERROR,0,0,0,0",    #qy5
-"0,UPDATE,1,0,1,1,0,0,NOERROR,0,0,0,0",    #qy6
+"0,NS_NOTIFY_OP,1,0,1,1,0,1,NOTIMP,0,0,0,0",    #qy1
+"0,UPDATE,1,0,0,1,0,1,NOTIMP,0,0,0,0",    #qy2
+"0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy3
+"0,QUERY,1,1,1,1,1,1,NOERROR,0,0,0,0",    #qy4
+"0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy5
+"0,QUERY,0,0,1,0,1,0,NOTIMP,0,0,0,0",    #qy6
 "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy7
-"0,NS_NOTIFY_OP,0,1,0,1,1,1,NOERROR,0,0,0,0",    #qy8
-"0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy9
+"0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy8
+"0,IQUERY,0,1,0,0,0,1,NOERROR,0,0,0,0",    #qy9
 "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy10
 "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy11
 );
@@ -71,14 +71,14 @@ my @nct = (
 ". IN A",    #nct0
 ". IN A",    #nct1
 ". IN A",    #nct2
-". IN A",    #nct3
-"jjjjjjjjjjjj. HS NS",    #nct4
-". IN A",    #nct5
+". CH CNAME",    #nct3
+". IN A",    #nct4
+". IN DNSKEY",    #nct5
 ". IN A",    #nct6
-"jjjjjjjjjjjj. CH RRSIG",    #nct7
-". IN A",    #nct8
-". IN DNSKEY",    #nct9
-". ANY SOA",    #nct10
+". 65280 TSIG",    #nct7
+"jjjjjjjjjjjj. 65280 TSIG",    #nct8
+". IN A",    #nct9
+"jjjjjjjjjjjj. ANY A",    #nct10
 ". IN IXFR",    #nct11
 );
 
@@ -89,27 +89,28 @@ my @iq = (
 "1,QUERY,0,0,0,0,0,0,NXDOMAIN,1,0,0,0",    #iq2
 "1,QUERY,0,0,0,0,0,0,NOERROR,1,0,0,0",    #iq3
 "1,QUERY,0,0,0,1,0,0,NOERROR,.+,.+,.+,.+",    #iq4
-"1,QUERY,0,0,0,1,0,0,NOTIMP,.+,.+,.+,.+",    #iq5
-"1,NS_NOTIFY_OP,0,0,0,1,0,0,SERVFAIL,1,0,0,0",    #iq6
-"1,NS_NOTIFY_OP,0,0,0,1,0,0,REFUSED,1,0,0,0",    #iq7
-"0,NS_NOTIFY_OP,1,0,0,1,0,0,NOTIMP,1,0,0,0",    #iq8
-"1,QUERY,1,0,0,0,0,1,NOERROR,.+,.+,.+,.+",    #iq9
-"1,QUERY,0,0,1,1,0,0,SERVFAIL,1,0,0,0",    #iq10
-"0,QUERY,0,0,1,0,0,0,NOERROR,1,0,0,0",    #iq11
-"1,QUERY,0,0,1,0,0,0,NOTIMP,1,0,0,0",    #iq12
-"0,IQUERY,0,0,1,1,1,0,NOERROR,1,0,0,0",    #iq13
-"1,IQUERY,0,0,1,1,0,0,NOTIMP,1,0,0,0",    #iq14
-"1,NS_NOTIFY_OP,0,0,0,1,0,0,FORMERR,1,0,0,0",    #iq15
-"1,UPDATE,0,0,1,1,0,0,FORMERR,1,0,0,0",    #iq16
-"1,QUERY,0,0,1,0,0,0,SERVFAIL,1,0,0,0",    #iq17
-"1,QUERY,0,0,1,0,0,0,REFUSED,1,0,0,0",    #iq18
-"1,UPDATE,0,0,1,1,0,0,FORMERR,0,0,0,0",    #iq19
-"1,NS_NOTIFY_OP,0,0,0,1,0,1,FORMERR,1,0,0,0",    #iq20
-"1,QUERY,0,0,1,1,0,0,NOERROR,.+,.+,.+,.+",    #iq21
-"1,QUERY,0,0,1,1,0,1,NOERROR,.+,.+,.+,.+",    #iq22
-"1,QUERY,0,1,1,1,0,0,NOERROR,.+,.+,.+,.+",    #iq23
+"1,NS_NOTIFY_OP,0,0,1,1,0,0,FORMERR,1,0,0,0",    #iq5
+"1,NS_NOTIFY_OP,0,0,1,1,0,0,REFUSED,1,0,0,0",    #iq6
+"1,NS_NOTIFY_OP,0,0,1,1,0,1,FORMERR,1,0,0,0",    #iq7
+"1,UPDATE,0,0,0,1,0,1,FORMERR,1,0,0,0",    #iq8
+"1,QUERY,0,0,1,0,0,0,SERVFAIL,1,0,0,0",    #iq9
+"1,QUERY,0,0,1,0,0,0,REFUSED,1,0,0,0",    #iq10
+"1,UPDATE,0,0,0,1,0,1,FORMERR,0,0,0,0",    #iq11
+"1,QUERY,0,0,1,1,0,0,NOERROR,.+,.+,.+,.+",    #iq12
+"1,QUERY,0,0,1,1,0,1,NOERROR,.+,.+,.+,.+",    #iq13
+"1,QUERY,0,1,1,1,0,0,NOERROR,.+,.+,.+,.+",    #iq14
+"0,NS_NOTIFY_OP,1,0,1,1,0,1,NOTIMP,1,0,0,0",    #iq15
+"1,QUERY,1,0,0,0,0,0,NOERROR,.+,.+,.+,.+",    #iq16
+"1,QUERY,0,0,1,1,0,0,SERVFAIL,1,0,0,0",    #iq17
+"1,QUERY,0,0,1,0,0,0,NOTIMP,1,0,0,0",    #iq18
+"0,QUERY,0,0,1,0,0,0,NOERROR,1,0,0,0",    #iq19
+"1,IQUERY,0,1,0,0,0,0,NOTIMP,1,0,0,0",    #iq20
+"0,IQUERY,0,1,0,0,0,1,NOERROR,1,0,0,0",    #iq21
+"1,NS_NOTIFY_OP,0,0,1,1,0,0,SERVFAIL,1,0,0,0",    #iq22
+"1,QUERY,0,0,1,1,0,0,NOTIMP,.+,.+,.+,.+",    #iq23
 "1,QUERY,0,0,0,0,0,0,REFUSED,0,0,0,0",    #iq24
 "1,QUERY,0,0,1,1,0,0,REFUSED,1,0,0,0",    #iq25
+"1,QUERY,0,0,1,1,0,0,NXDOMAIN,.+,.+,.+,.+",    #iq26
 );
 my @ruleset = (
 { fingerprint => $iq[0], result => { vendor =>"", product=>"SuperDNS", version=>""}, },
@@ -117,52 +118,52 @@ my @ruleset = (
 { fingerprint => $iq[2], result => { vendor =>"Unlogic", product=>"Eagle DNS", version=>"1.1.1"}, },
 { fingerprint => $iq[3], result => { vendor =>"Unlogic", product=>"Eagle DNS", version=>"1.0 -- 1.0.1"}, },
 { fingerprint=>$iq[4], header=>$qy[1], query=>$nct[1], ruleset => [
-  { fingerprint=>$iq[5], header=>$qy[2], query=>$nct[2], ruleset => [
-    { fingerprint => $iq[6], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.0rc3"}, },
-    { fingerprint => $iq[7], result => { vendor =>"ISC", product=>"BIND", version=>"9.1.1 -- 9.1.3"}, },
-    { fingerprint=>"query timed out", header=>$qy[3], query=>$nct[3], ruleset => [
-      { fingerprint => $iq[9], result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2000"}, },
-      { fingerprint=>$iq[10], header=>$qy[4], query=>$nct[4], ruleset => [
-        { fingerprint => "query timed out", result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2003 R2"}, },
-        { fingerprint=>$iq[12], header=>$qy[5], query=>$nct[5], ruleset => [
-          { fingerprint => "query timed out", result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2008"}, },
-          { fingerprint => $iq[14], result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2003"}, },
-          { fingerprint => ".+", state=>"q0r4q1r5q2r8q3r10q4r12q5r?" },
+  { fingerprint => $iq[5], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.3 -- 9.2.9"}, },
+  { fingerprint => $iq[6], result => { vendor =>"ISC", product=>"BIND", version=>"9.1.1 -- 9.1.3"}, },
+  { fingerprint=>$iq[7], header=>$qy[2], query=>$nct[2], ruleset => [
+    { fingerprint=>$iq[8], header=>$qy[3], query=>$nct[3], ruleset => [
+      { fingerprint => $iq[9], result => { vendor =>"ISC", product=>"BIND", version=>"9.7.2"}, },
+      { fingerprint => $iq[10], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.3 -- 9.7.3"}, },
+      { fingerprint => ".+", state=>"q0r4q1r7q2r8q3r?" },
+      ]},
+    { fingerprint=>$iq[11], header=>$qy[4], query=>$nct[4], ruleset => [
+      { fingerprint => $iq[12], result => { vendor =>"ISC", product=>"BIND", version=>"9.3.0 -- 9.3.6-P1"}, },
+      { fingerprint=>$iq[13], header=>$qy[3], query=>$nct[3], ruleset => [
+        { fingerprint => $iq[10], result => { vendor =>"ISC", product=>"BIND", version=>"9.5.2 -- 9.7.1"}, },
+        { fingerprint=>$iq[9], header=>$qy[5], query=>$nct[5], ruleset => [
+          { fingerprint => $iq[12], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.0"}, },
+          { fingerprint => $iq[14], result => { vendor =>"ISC", product=>"BIND", version=>"9.4.0 -- 9.5.1"}, },
+          { fingerprint => ".+", state=>"q0r4q1r7q2r8r11q4r13q3r9q5r?" },
           ]},
         ]},
       ]},
     ]},
-  { fingerprint=>$iq[4], header=>$qy[2], query=>$nct[2], ruleset => [
-    { fingerprint => $iq[6], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.0 -- 9.2.2-P3"}, },
-    { fingerprint=>$iq[15], header=>$qy[6], query=>$nct[6], ruleset => [
-      { fingerprint=>$iq[16], header=>$qy[7], query=>$nct[7], ruleset => [
-        { fingerprint => $iq[17], result => { vendor =>"ISC", product=>"BIND", version=>"9.7.2"}, },
-        { fingerprint => $iq[18], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.3 -- 9.7.3"}, },
-        { fingerprint => ".+", state=>"q0r4q1r5r4q2r15q6r16q7r?" },
-        ]},
-      { fingerprint=>$iq[19], header=>$qy[8], query=>$nct[8], ruleset => [
-        { fingerprint => $iq[15], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.3 -- 9.2.9"}, },
-        { fingerprint=>$iq[20], header=>$qy[3], query=>$nct[3], ruleset => [
-          { fingerprint => $iq[21], result => { vendor =>"ISC", product=>"BIND", version=>"9.3.0 -- 9.3.6-P1"}, },
-          { fingerprint=>$iq[22], header=>$qy[9], query=>$nct[9], ruleset => [
-            { fingerprint => $iq[23], result => { vendor =>"ISC", product=>"BIND", version=>"9.4.0 -- 9.5.1"}, },
-            { fingerprint=>$iq[21], header=>$qy[7], query=>$nct[7], ruleset => [
-              { fingerprint => $iq[17], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.0"}, },
-              { fingerprint => $iq[18], result => { vendor =>"ISC", product=>"BIND", version=>"9.5.2 -- 9.7.1"}, },
-              { fingerprint => ".+", state=>"q0r4q1r5r4q2r15q6r16r19q8r20q3r22q9r21q7r?" },
-              ]},
-            ]},
+  { fingerprint=>"query timed out", header=>$qy[6], query=>$nct[6], ruleset => [
+    { fingerprint => $iq[16], result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2000"}, },
+    { fingerprint=>$iq[17], header=>$qy[7], query=>$nct[7], ruleset => [
+      { fingerprint => $iq[18], result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2003"}, },
+      { fingerprint=>"query timed out", header=>$qy[8], query=>$nct[8], ruleset => [
+        { fingerprint => $iq[18], result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2003 R2"}, },
+        { fingerprint=>"query timed out", header=>$qy[9], query=>$nct[9], ruleset => [
+          { fingerprint => $iq[20], result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2008 R2"}, },
+          { fingerprint => "query timed out", result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2008"}, },
+          { fingerprint => ".+", state=>"q0r4q1r7r15q6r17q7r19q8r19q9r?" },
           ]},
         ]},
       ]},
+    ]},
+  { fingerprint=>$iq[22], header=>$qy[6], query=>$nct[6], ruleset => [
+    { fingerprint => $iq[23], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.0rc3"}, },
+    { fingerprint => $iq[12], result => { vendor =>"ISC", product=>"BIND", version=>"9.2.0 -- 9.2.2-P3"}, },
+    { fingerprint => ".+", state=>"q0r4q1r7r15r22q6r?" },
     ]},
   ]},
 { fingerprint=>$iq[24], header=>$qy[10], query=>$nct[10], ruleset => [
   { fingerprint => $iq[25], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.3.0 -- 1.4.0"}, },
-  { fingerprint=>$iq[21], header=>$qy[11], query=>$nct[11], ruleset => [
-    { fingerprint => $iq[11], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.4.1 -- 1.4.9"}, },
-    { fingerprint => $iq[18], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.4.10 -- 1.4.12"}, },
-    { fingerprint => ".+", state=>"q0r4r24q10r21q11r?" },
+  { fingerprint=>$iq[26], header=>$qy[11], query=>$nct[11], ruleset => [
+    { fingerprint => "header section incomplete", result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.4.1 -- 1.4.9"}, },
+    { fingerprint => $iq[10], result => { vendor =>"NLnetLabs", product=>"Unbound", version=>"1.4.10 -- 1.4.12"}, },
+    { fingerprint => ".+", state=>"q0r4r24q10r26q11r?" },
     ]},
   ]},
 );
@@ -277,14 +278,14 @@ sub init
   $initrule{header}, $initrule{query}, \@ruleset);
 
   #if(!defined $match{product}){
-    #For backwards compatibility with old fingerprint code which never set the rd
-   # $ignore_recurse = 1;
-    #my %old_match = $self->process($qserver, $qport,
-    #$old_initrule{header}, $old_initrule{query}, \@old_ruleset);
+  #For backwards compatibility with old fingerprint code which never set the rd
+  # $ignore_recurse = 1;
+  #my %old_match = $self->process($qserver, $qport,
+  #$old_initrule{header}, $old_initrule{query}, \@old_ruleset);
 
-    #if(defined $old_match{product}){
-    #  return %old_match;
-   # }
+  #if(defined $old_match{product}){
+  #  return %old_match;
+  # }
   #}
 
   return %match;
