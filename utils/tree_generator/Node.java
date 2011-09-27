@@ -32,7 +32,8 @@ class Node {
       sb.append("<response id=\"");
       sb.append(this.addResponseToArrayList(responses, r));
       sb.append("\">");
-      sb.append(this.uniqueHits.get(r).product);
+      DNSServer serverInfo = this.uniqueHits.get(r);
+      sb.append(serverInfo.vendor).append(" ").append(serverInfo.product).append(" ").append(serverInfo.version);
       sb.append("</response>\n");
     }
 
@@ -41,7 +42,7 @@ class Node {
       sb.append("<response id=\"");
       sb.append(this.addResponseToArrayList(responses, (String) r));
       sb.append("\">");
-      sb.append(combinedInfo.version);
+      sb.append(combinedInfo.vendor).append(" ").append(combinedInfo.product).append(" ").append(combinedInfo.version);
       sb.append("</response>\n");
     }
 
