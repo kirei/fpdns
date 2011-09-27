@@ -29,7 +29,7 @@ public class QueryTree {
   public String getXML() {
     ArrayList<String> responses = new ArrayList<String>();
     ArrayList<Integer> queryIndexes = new ArrayList<Integer>();
-    String xml = "<?xml version=\"1.0\"?>\n";
+    String xml = "<?xml version=\"1.0\"?>\n<fingerprint>\n";
     String rootNodeXML = this.root.getXML(responses, queryIndexes);
     xml += "<queries>\n";
     for (int i = 0; i < queryIndexes.size(); i++) {
@@ -46,7 +46,7 @@ public class QueryTree {
     xml += "</responses>\n";
     xml += "<tree>\n";
     xml += rootNodeXML + "\n";
-    xml += "</tree>\n";
+    xml += "</tree>\n<fingerprint>\n";
     return xml;
   }
 
