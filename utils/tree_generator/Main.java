@@ -37,7 +37,7 @@ public class Main {
 
     Node rootNode = queryTree.root;
     for(int i=0; i<queryTree.allQueries.length; i++){
-      if(FPDNSConstants.OPCODES.containsKey(queryTree.allQueries[i].getOpcode())){
+      if(queryTree.allQueries[i].isSupportedByLibrary(LibConstants.RUBY_LIB)){
         rootNode.query = i;
         break;
       }
@@ -51,8 +51,8 @@ public class Main {
     }
     queryTree.growTree();
 
-    //System.out.println(queryTree.getXML());
-    System.out.println(queryTree.getPerlFPDNSFormat());
+    System.out.println(queryTree.getXML());
+    //System.out.println(queryTree.getPerlFPDNSFormat());
   }
 
   static String[] getResponseFiles(String responseFilesPath) {

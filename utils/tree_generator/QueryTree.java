@@ -1,4 +1,3 @@
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +45,7 @@ public class QueryTree {
     xml += "</responses>\n";
     xml += "<tree>\n";
     xml += rootNodeXML + "\n";
-    xml += "</tree>\n<fingerprint>\n";
+    xml += "</tree>\n</fingerprint>\n";
     return xml;
   }
 
@@ -64,7 +63,7 @@ public class QueryTree {
     String iq = "my @iq = (\n";
     int count = 0;
     for (String response : responses) {
-      iq += "\"" + getHeader(response, FPDNSConstants.OPCODES, FPDNSConstants.RCODES) + "\",    #iq" + count + "\n";
+      iq += "\"" + getHeader(response, LibConstants.PERL_LIB.get("opcodes"), LibConstants.PERL_LIB.get("rcodes")) + "\",    #iq" + count + "\n";
       count++;
     }
     iq += ");\n";
@@ -72,7 +71,7 @@ public class QueryTree {
     count = 0;
     String qy = "my @qy = (\n";
     for (int j = 0; j < queryIndexes.size(); j++) {
-      qy += "\"" + zeroHeaderCounts(getHeader(allQueries[queryIndexes.get(j)].header, FPDNSConstants.OPCODES, FPDNSConstants.RCODES)) + "\",    #qy" + count + "\n";
+      qy += "\"" + zeroHeaderCounts(getHeader(allQueries[queryIndexes.get(j)].header, LibConstants.PERL_LIB.get("opcodes"), LibConstants.PERL_LIB.get("rcodes"))) + "\",    #qy" + count + "\n";
       count++;
     }
     qy += ");\n\n";
@@ -80,7 +79,7 @@ public class QueryTree {
     count = 0;
     String nct = "my @nct = (\n";
     for (int j = 0; j < queryIndexes.size(); j++) {
-      nct += "\"" + getNCT(allQueries[queryIndexes.get(j)].nameClassType, FPDNSConstants.CLASSES, FPDNSConstants.TYPES) + "\",    #nct" + count + "\n";
+      nct += "\"" + getNCT(allQueries[queryIndexes.get(j)].nameClassType, LibConstants.PERL_LIB.get("clases"), LibConstants.PERL_LIB.get("types")) + "\",    #nct" + count + "\n";
       count++;
     }
     nct += ");\n\n";
@@ -94,8 +93,8 @@ public class QueryTree {
 
       List serverList = ((List) cur.multipleHits.get(response));
       for (int queryIndex : this.queries) {
-        //If an opcode is not supported by FPDNS, then skip it
-        if(!FPDNSConstants.OPCODES.containsKey(this.allQueries[queryIndex].getOpcode())){
+        //If an opcode is not supported, then skip it
+        if(!this.allQueries[queryIndex].isSupportedByLibrary(LibConstants.RUBY_LIB)){
           continue;
         }
         
