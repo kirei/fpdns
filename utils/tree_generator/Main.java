@@ -47,10 +47,19 @@ public class Main {
       System.out.println("Missing arguments. Specify paths to response files and query file");
       return;
     }
+
     if (args.length == 1) {
       System.out.println("Missing argument. Specify path to response files directory");
       return;
     }
+    String outputFormat = "perlFPDNS";
+
+    if(args.length >= 3){
+      if(args[2].equals("xml")){
+        outputFormat = "xml";
+      }
+    }
+
     String queriesFilePath = args[0];
     String responseFilesPath = args[1];
     String[] serverResponseFilePaths = getResponseFiles(responseFilesPath);
@@ -78,8 +87,14 @@ public class Main {
     }
     queryTree.growTree();
 
-    //System.out.println(queryTree.getXML());
-    System.out.println(queryTree.getPerlFPDNSFormat());
+    
+      if(outputFormat.equals("xml")){
+        System.out.println(queryTree.getXML());
+      }else{
+        System.out.println(queryTree.getPerlFPDNSFormat());
+      }
+    
+    
   }
 
   static String[] getResponseFiles(String responseFilesPath) {
