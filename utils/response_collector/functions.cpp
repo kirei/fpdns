@@ -36,6 +36,11 @@
 
 #include "functions.h"
 
+/**
+ * Convert a C styled string to an int representing an ip address
+ * @param ipstr
+ * @return an int representing an ip address
+ */
 unsigned int str_to_ip(char *ipstr) {
     int iRet = 0;
 
@@ -43,17 +48,20 @@ unsigned int str_to_ip(char *ipstr) {
     memset(&tAddr, 0, sizeof (tAddr));
     int iLen = strlen(ipstr);
     if (iLen > 15) {
-        //fprintf(stderr, "IPv4 addresses are not that long (%d chars)\n", iLen);
+        fprintf(stderr, "IPv4 addresses are not that long (%d chars)\n", iLen);
     } else if (!inet_pton(AF_INET, ipstr, &tAddr)) {
-        //fprintf(stderr, "Unable to convert IP '%s' to number.\n", ipstr);
+        fprintf(stderr, "Unable to convert IP '%s' to number.\n", ipstr);
     } else {
-        //fprintf(stdout, "'%s' -> %d\n", ipstr, (unsigned) htonl(tAddr.s_addr));
         iRet = (unsigned) htonl(tAddr.s_addr);
     }
 
     return iRet;
 }
 
+/**
+ * Output the header to stdout
+ * @param header
+ */
 void printHeader(DnsHeader &header) {
     int opcode = header.getOpcode();
     
@@ -64,6 +72,10 @@ void printHeader(DnsHeader &header) {
 
 }
 
+/**
+ * Output the name, class and type to stdout
+ * @param packet
+ */
 void printNameClassType(DnsPacket &packet) {
     RRList_t questions;
     packet.getQuestions(questions);
