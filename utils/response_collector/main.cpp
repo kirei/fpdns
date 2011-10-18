@@ -24,7 +24,7 @@
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-*/
+ */
 
 #include "functions.h"
 
@@ -73,25 +73,55 @@
 #define RESPONSE_COLLECTOR_VERSION "0.1"
 
 int main(int argc, char** argv) {
+    int retries = 1;
+    int timeout = 5;
 
-    //TODO: Check argc for right number of arguments
+    if (argc == 1) {
+        fprintf(stdout, "Usage: \n\nresponse_collector \"$DNS_SERVER_NAME\" $SERVER_IP_ADDRESS [timeout=5] [retries=1]\n\nor\n\n");
+        fprintf(stdout, "response_collector \"$VENDOR | $PRODUCT | $VERSION\" $SERVER_IP_ADDRESS [timeout=5] [retries=1]\n\nor\n\n");
+        fprintf(stdout, "response_collector --show-queries\n\n\n");
+
+        exit(1);
+    }
 
     bool showQueries = (strcmp(argv[1], "--show-queries") == false);
+    if (argc == 2 && !showQueries) {
+        fprintf(stderr, "Error: Invalid command line argument\n");
 
-    DnsPacket oQuest(true, -1);
+        exit(1);
+    }
+
+    unsigned int ip_address;
+    if (argc > 2) {
+        ip_address = str_to_ip(argv[2]);
+        
+        //0.0.0.0 address will always fail
+        if (ip_address == 0) {
+            exit(1);
+        }
+        if (argc >= 4) {
+            timeout = atoi(argv[3]);
+            if (argc >= 5) {
+                retries = atoi(argv[4]);
+            }
+        }
+    }
+
 
     DnsResolver oRes;
-    oRes.setRetries(1);
-    oRes.setTimeout(5);
+    oRes.setRetries(retries);
+    oRes.setTimeout(timeout);
 
-    if(!showQueries){
-    oRes.setNameserver(str_to_ip(argv[2]));
+    if (!showQueries) {
+        oRes.setNameserver(ip_address);
     }
     std::string sA = ".";
     DnsName oName(sA);
 
     DnsRR *pQuestionRR = DnsRR::question(oName, DNS_RR_A);
     pQuestionRR->set_class(DNS_CLASS_IN);
+
+    DnsPacket oQuest(true, -1);
     oQuest.addQuestion(*pQuestionRR);
 
     int count = 0;
@@ -106,12 +136,13 @@ int main(int argc, char** argv) {
     unsigned rcode_index;
     rcode_t rcodes[NUM_RCODE] = {DNS_NOERROR, DNS_NOTIMP};
 
+
     if (showQueries) {
         fprintf(stdout, "ver %s\n", RESPONSE_COLLECTOR_VERSION);
     } else {
         fprintf(stdout, "%s\n", argv[1]);
     }
-    
+
     for (opcode = 0; opcode < NUM_OPCODE; opcode++) {
         for (aa = 0; aa < NUM_AA; aa++) {
             for (tc = 0; tc < NUM_TC; tc++) {
@@ -146,7 +177,6 @@ int main(int argc, char** argv) {
                                             printHeader(oResp.getHeader());
                                         }
                                         count++;
-
                                     }
                                 }
                             }
@@ -177,10 +207,10 @@ int main(int argc, char** argv) {
                 DnsPacket oQuest(true, -1);
 
                 DnsResolver oRes;
-                oRes.setRetries(1);
-                oRes.setTimeout(5);
-                if(!showQueries){
-                oRes.setNameserver(str_to_ip(argv[2]));
+                oRes.setRetries(retries);
+                oRes.setTimeout(timeout);
+                if (!showQueries) {
+                    oRes.setNameserver(str_to_ip(argv[2]));
                 }
                 std::string sA = qnames[i];
                 DnsName oName(sA);
