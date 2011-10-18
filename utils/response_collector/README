@@ -4,7 +4,11 @@ To Compile:
 - Run ./compile to compile response collector
 
 To Run:
-./response_collector "DNS_SERVER_NAME" SERVER_IP_ADDRESS
+./response_collector "$DNS_SERVER_NAME" $SERVER_IP_ADDRESS
+
+or
+
+./response_collector "$VENDOR | $PRODUCT | $VERSION" $SERVER_IP_ADDRESS
 
 or
 
