@@ -99,9 +99,6 @@ public final class LibConstants {
           put("250", "TSIG");
           put("251", "IXFR");
           put("252", "AXFR");
-          // TODO:
-          // There are 8 types implemented in the collector that do not appear in the %typesbyname array of
-          // the perl dns libray. Need to investigate what happens when these are used in queries
         }
       }));
     }

@@ -1,30 +1,30 @@
 /*
-    Copyright (c) 2011 Verisign, Inc. All rights reserved.
+Copyright (c) 2011 Verisign, Inc. All rights reserved.
 
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions
-    are met:
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
 
-    1. Redistributions of source code must retain the above copyright
-       notice, this list of conditions and the following disclaimer.
-    2. Redistributions in binary form must reproduce the above copyright
-       notice, this list of conditions and the following disclaimer in the
-       documentation and/or other materials provided with the distribution.
-    3. The name of the authors may not be used to endorse or promote products
-       derived from this software without specific prior written permission.
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+derived from this software without specific prior written permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-    IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-    OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-    IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-    NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-*/
+ */
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,15 +34,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.collections.map.MultiValueMap;
 
-/**
- *
- * @author sjobe
- */
 public class QueryTree {
 
   Node root;
   int queries[];
-  Query[] allQueries;   
+  Query[] allQueries;
 
   QueryTree(Node n, int qrs[]) {
     this.root = n;
@@ -53,6 +49,11 @@ public class QueryTree {
     this.growTree(root);
   }
 
+  /**
+   * Get an xml representation of the query tree
+   *
+   * @return an xml representation of the query tree
+   */
   public String getXML() {
     ArrayList<String> responses = new ArrayList<String>();
     ArrayList<Integer> queryIndexes = new ArrayList<Integer>();
@@ -77,6 +78,11 @@ public class QueryTree {
     return xml;
   }
 
+  /**
+   * Get a perl representation of the query tree
+   * 
+   * @return a perl representation of the query tree
+   */
   public String getPerlFPDNSFormat() {
     ArrayList<String> responses = new ArrayList<String>();
 
@@ -91,7 +97,7 @@ public class QueryTree {
     String iq = "my @iq = (\n";
     int count = 0;
     for (String response : responses) {
-      iq += "\"" + getHeader(response, LibConstants.PERL_LIB.get("opcodes"), LibConstants.PERL_LIB.get("rcodes")) + "\",    #iq" + count + "\n";
+      iq += "\"" + getPerlFPDNSHeaderString(response, LibConstants.PERL_LIB.get("opcodes"), LibConstants.PERL_LIB.get("rcodes")) + "\",    #iq" + count + "\n";
       count++;
     }
     iq += ");\n";
@@ -99,7 +105,7 @@ public class QueryTree {
     count = 0;
     String qy = "my @qy = (\n";
     for (int j = 0; j < queryIndexes.size(); j++) {
-      qy += "\"" + zeroHeaderCounts(getHeader(allQueries[queryIndexes.get(j)].header, LibConstants.PERL_LIB.get("opcodes"), LibConstants.PERL_LIB.get("rcodes"))) + "\",    #qy" + count + "\n";
+      qy += "\"" + zeroPerlFPDNSHeaderCounts(getPerlFPDNSHeaderString(allQueries[queryIndexes.get(j)].header, LibConstants.PERL_LIB.get("opcodes"), LibConstants.PERL_LIB.get("rcodes"))) + "\",    #qy" + count + "\n";
       count++;
     }
     qy += ");\n\n";
@@ -107,7 +113,7 @@ public class QueryTree {
     count = 0;
     String nct = "my @nct = (\n";
     for (int j = 0; j < queryIndexes.size(); j++) {
-      nct += "\"" + getNCT(allQueries[queryIndexes.get(j)].nameClassType, LibConstants.PERL_LIB.get("classes"), LibConstants.PERL_LIB.get("types")) + "\",    #nct" + count + "\n";
+      nct += "\"" + getPerlFPDNSNCTString(allQueries[queryIndexes.get(j)].nameClassType, LibConstants.PERL_LIB.get("classes"), LibConstants.PERL_LIB.get("types")) + "\",    #nct" + count + "\n";
       count++;
     }
     nct += ");\n\n";
@@ -115,6 +121,12 @@ public class QueryTree {
     return qy + nct + initRule + iq + ruleSet;
   }
 
+  /**
+   * A recursive method that is responsible for building out the tree from
+   * the root node
+   * 
+   * @param cur
+   */
   private void growTree(Node cur) {
     Set responses = cur.multipleHits.keySet();
     for (Object response : responses) {
@@ -122,16 +134,16 @@ public class QueryTree {
       List serverList = ((List) cur.multipleHits.get(response));
       for (int queryIndex : this.queries) {
         //If an opcode is not supported, then skip it
-        if(!this.allQueries[queryIndex].isSupportedByLibrary(LibConstants.PERL_LIB)){
+        if (!this.allQueries[queryIndex].isSupportedByLibrary(LibConstants.PERL_LIB)) {
           continue;
         }
-        
+
         MultiValueMap nodeChildrenGroupedByResponse = new MultiValueMap();
         for (Object server : serverList) {
           String rsp = ((DNSServer) server).responses[queryIndex];
 
           rsp = QueryTree.normalizeResponseString(rsp);
-          
+
           nodeChildrenGroupedByResponse.put(rsp, server);
         }
         //If query can split the group of servers, set up a new child node using the query
@@ -168,7 +180,14 @@ public class QueryTree {
     }
   }
 
-  public static String getHeader(String header, Map<String, String> opcodes, Map<String, String> rcodes) {
+  /**
+   *
+   * @param header
+   * @param opcodes
+   * @param rcodes
+   * @return a string representation of the header that's in a format compatible with the perl fpdns implementation
+   */
+  private static String getPerlFPDNSHeaderString(String header, Map<String, String> opcodes, Map<String, String> rcodes) {
     String h[] = header.split(",");
     if (opcodes.containsKey(h[1])) {
       h[1] = opcodes.get(h[1]);
@@ -181,7 +200,14 @@ public class QueryTree {
     return join(h, ",");
   }
 
-  public static String getNCT(String nct, Map<String, String> classes, Map<String, String> types) {
+  /**
+   *
+   * @param nct
+   * @param classes
+   * @param types
+   * @return a string representation of the name/class/type that's in a format compatible with the perl fpdns implementation
+   */
+  private static String getPerlFPDNSNCTString(String nct, Map<String, String> classes, Map<String, String> types) {
     String nctArray[] = nct.split("\\s+");
     if (classes.containsKey(nctArray[1])) {
       nctArray[1] = classes.get(nctArray[1]);
@@ -194,7 +220,15 @@ public class QueryTree {
     return join(nctArray, " ");
   }
 
-  public static String join(String[] ary, String delim) {
+  /**
+   * Java Strings have a split method, but no join method.
+   * This method takes an array of string and joins them separated by delim
+   *
+   * @param ary
+   * @param delim
+   * @return
+   */
+  private static String join(String[] ary, String delim) {
     String out = "";
     for (int i = 0; i < ary.length; i++) {
       if (i != 0) {
@@ -205,35 +239,56 @@ public class QueryTree {
     return out;
   }
 
-  public static String zeroHeaderCounts(String header){
+  /**
+   * The perl implementation of fpdns fails to run when it tries to run a query
+   * that doesnt have "qdcount","ancount","nscount","arcount" all set to 0.
+   *
+   * @param header
+   * @return a string representation of the header with the 'counts' set to 0
+   */
+  private static String zeroPerlFPDNSHeaderCounts(String header) {
     String h[] = header.split(",");
-    for(int i=1; i<=4; i++){
-      h[h.length-i] = "0";
+    for (int i = 1; i <= 4; i++) {
+      h[h.length - i] = "0";
     }
     return join(h, ",");
   }
 
-  public static String normalizeResponseString(String response){
-    if(!response.matches(".*[10],[0],[0],[0]")){
-      int pos = QueryTree.findNthIndexOf (response, ",", 9);
-      response = response.substring(0,pos)+",.+,.+,.+,.+";
+  /**
+   *
+   * @param response
+   * @return
+   */
+  public static String normalizeResponseString(String response) {
+    if (!response.matches(".*[10],[0],[0],[0]")) {
+      int pos = QueryTree.findNthIndexOf(response, ",", 9);
+      response = response.substring(0, pos) + ",.+,.+,.+,.+";
     }
     return response;
   }
 
-  public static int findNthIndexOf (String str, String needle, int occurence)
-            throws IndexOutOfBoundsException {
+  /**
+   *
+   * @param str
+   * @param needle
+   * @param occurence
+   * @return
+   * @throws IndexOutOfBoundsException
+   */
+  private static int findNthIndexOf(String str, String needle, int occurence)
+          throws IndexOutOfBoundsException {
     int index = -1;
     Pattern p = Pattern.compile(needle, Pattern.MULTILINE);
     Matcher m = p.matcher(str);
-    while(m.find()) {
-        if (--occurence == 0) {
-            index = m.start();
-            break;
-        }
+    while (m.find()) {
+      if (--occurence == 0) {
+        index = m.start();
+        break;
+      }
     }
-    if (index < 0) throw new IndexOutOfBoundsException();
+    if (index < 0) {
+      throw new IndexOutOfBoundsException();
+    }
     return index;
-}
-
+  }
 }

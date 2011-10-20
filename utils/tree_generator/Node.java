@@ -31,10 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import org.apache.commons.collections.map.MultiValueMap;
 
-/**
- *
- * @author sjobe
- */
+
 class Node {
 
   int query;
@@ -48,7 +45,12 @@ class Node {
     children = new HashMap<String, Node>();
   }
 
-  
+  /**
+   * Get an xml representation of the fingerprint tree
+   * @param responses
+   * @param queryIndexes
+   * @return
+   */
   @SuppressWarnings("unchecked") //Else we get a warning about an unchecked cast
   String getXML(ArrayList<String> responses, ArrayList<Integer> queryIndexes) {
     StringBuilder sb = new StringBuilder();
@@ -88,6 +90,14 @@ class Node {
     return sb.toString();
   }
 
+  /**
+   * Get a perl representation of the fingerprint tree
+   * 
+   * @param responses
+   * @param queryIndexes
+   * @param state
+   * @return
+   */
   String getPerlFPDNSFormat(ArrayList<String> responses, ArrayList<Integer> queryIndexes, String state) {
     StringBuilder sb = new StringBuilder();
     String s;
@@ -125,6 +135,13 @@ class Node {
     return sb.toString();
   }
 
+  /**
+   * Add a response to an array list if it doesn't already exist
+   *
+   * @param responses
+   * @param response
+   * @return the index of the response in the array list
+   */
   int addResponseToArrayList(ArrayList<String> responses, String response) {
     if (!responses.contains(response)) {
       responses.add(response);
@@ -132,6 +149,13 @@ class Node {
     return responses.indexOf(response);
   }
 
+  /**
+   * Add a queryIndex to an array list of query indices if it isn't already in the array list
+   *
+   * @param queries
+   * @param queryIndex
+   * @return the array index of the newly added queryIndex
+   */
   int addQueryIndexToArrayList(ArrayList<Integer> queries, int queryIndex) {
     if (!queries.contains(queryIndex)) {
       queries.add(queryIndex);

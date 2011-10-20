@@ -31,10 +31,9 @@ import java.util.Map;
 
 /**
  *
- * @author sjobe
  *
  * Is NOT meant to be an exact model of a DNS query,
- * please don't have my head for it. 
+ * please don't have my head for it :-)
  *
  */
 public class Query {
@@ -44,6 +43,11 @@ public class Query {
   String[] headerArray;
   String [] NCTArray;
 
+  /**
+   * Returns an array representing "qr","opcode","aa","tc","rd","ra","ad","cd","rcode","qdcount","ancount","nscount","arcount"
+   * 
+   * @return an array with header values
+   */
   public String[] getHeaderArray() {
     if (headerArray == null) {
       this.headerArray = header.split(",");
@@ -51,6 +55,10 @@ public class Query {
     return this.headerArray;
   }
 
+  /**
+   * Return an array with the name, class and type of the object
+   * @return an array with name, class and type
+   */
   public String[] getNCTArray(){
     if(this.NCTArray == null) {
       this.NCTArray = nameClassType.split(" ");
@@ -58,18 +66,37 @@ public class Query {
     return this.NCTArray;
   }
 
+  /**
+   * Returns the query opcode
+   * 
+   * @return the opcode for the query
+   */
   public String getOpcode() {
     return this.getHeaderArray()[1].trim();
   }
 
+  /**
+   * Returns the query class
+   * @return the query class
+   */
   public String getRRClass() {
     return this.getNCTArray()[1].trim();
   }
 
+  /**
+   * Returns the query class
+   * @return  the query class
+   */
   public String getRRType() {
     return this.getNCTArray()[2].trim();
   }
 
+  /**
+   * Checks to see if the query is supported by the specified library
+   *
+   * @param lib a Map object representing the opcodes, classes and types supported by a dns library
+   * @return a boolean value indicating whether this query is supported by the library
+   */
   public boolean isSupportedByLibrary(Map<String, Map<String, String>> lib){
     if(!(lib.get("opcodes")).containsKey(this.getOpcode())){
       return false;

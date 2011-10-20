@@ -46,6 +46,12 @@ class DNSServer {
   String option;
   String[] responses;
 
+  /**
+   * Initialize a DNSServer object with the right responses
+   *
+   * @param numResponses
+   * @param filePath
+   */
   DNSServer(int numResponses, String filePath) {
     responses = new String[numResponses];
     try {
@@ -74,6 +80,12 @@ class DNSServer {
   DNSServer(){
   }
 
+  /**
+   * Accepts a | delimited string and assigns the values to the right attributes
+   *
+   *
+   * @param information should be in the format "$VENDOR | $PRODUCT | $VERSION"
+   */
   private void setServerInformation(String information){
       if(information.contains("|")){
         String[] info = information.split(Pattern.quote("|"));
@@ -87,6 +99,12 @@ class DNSServer {
     }
   }
 
+  /**
+   * Returns a string that represent the range of server versions in servers
+   *
+   * @param servers
+   * @return a shorter and friendlier string representation of the combined server versions
+   */
   public static DNSServer getCombinedServerInformation(List<DNSServer> servers){
     DNSServer d = new DNSServer();
 
@@ -124,7 +142,14 @@ class DNSServer {
     return d;
   }
 
-  public static String getCombinedVersionString(List<DNSServer> servers){
+
+  /**
+   * Sorts and combines version numbers into a shorter range format
+   *
+   * @param servers
+   * @return a string with the format oldest_version -- newest_version
+   */
+  private static String getCombinedVersionString(List<DNSServer> servers){
    String s = "";
    String versions[] = new String[servers.size()];
    int i = 0;

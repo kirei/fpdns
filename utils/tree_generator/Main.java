@@ -97,6 +97,12 @@ public class Main {
     
   }
 
+  /**
+   * Get the file paths to each response file
+   *
+   * @param responseFilesPath
+   * @return an array of strings representing response file paths
+   */
   static String[] getResponseFiles(String responseFilesPath) {
     ArrayList<String> paths = new ArrayList<String>();
     File folder = new File(responseFilesPath);
@@ -109,7 +115,14 @@ public class Main {
     return paths.toArray(new String[paths.size()]);
   }
 
-  static DNSServer[] initServers(int numServers, String[] serverResponseFilePaths) {
+  /**
+   * Initialize the DNSServer objects
+   *
+   * @param numServers
+   * @param serverResponseFilePaths
+   * @return an array of DNSServer objects
+   */
+  private static DNSServer[] initServers(int numServers, String[] serverResponseFilePaths) {
     DNSServer servers[] = new DNSServer[numServers];
     for (int i = 0; i < numServers; i++) {
       servers[i] = (new DNSServer(NUM_RESPONSES, serverResponseFilePaths[i]));
@@ -117,6 +130,13 @@ public class Main {
     return servers;
   }
 
+  /**
+   * Read all the queries from the query file and store them in an array
+   *
+   * @param numQueries
+   * @param queriesFilePath
+   * @return an array of Query objects
+   */
   static Query[] getAllQueries(int numQueries, String queriesFilePath) {
     Query queries[] = new Query[numQueries];
     try {
@@ -147,6 +167,14 @@ public class Main {
     return queries;
   }
 
+
+  /**
+   * Get the queries that will return unique responses
+   *
+   * @param numServers
+   * @param servers
+   * @return an array of queries that will return unique responses
+   */
   static int[] getUniqueQueries(int numServers, DNSServer servers[]) {
     int queries[];
     //Group identical rows together
