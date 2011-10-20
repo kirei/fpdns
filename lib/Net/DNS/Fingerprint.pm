@@ -113,7 +113,7 @@ my @iq = (
 "1,QUERY,0,0,1,1,0,0,REFUSED,1,0,0,0",    #iq25
 );
 my @ruleset = (
-{ fingerprint => $iq[0], result => { vendor =>"", product=>"SuperDNS", version=>""}, },
+{ fingerprint => $iq[0], result => { vendor =>"VeriSign", product=>"ATLAS", version=>""}, },
 { fingerprint => $iq[1], result => { vendor =>"NLnetLabs", product=>"NSD", version=>"3.1.0 -- 3.2.8"}, },
 { fingerprint => $iq[2], result => { vendor =>"Unlogic", product=>"Eagle DNS", version=>"1.1.1"}, },
 { fingerprint => $iq[3], result => { vendor =>"Unlogic", product=>"Eagle DNS", version=>"1.0 -- 1.0.1"}, },
