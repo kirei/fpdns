@@ -1731,7 +1731,7 @@ push @s, "[$r{option}]" if(defined $r{option});
 
 push @s, $r{vstring} if(defined $r{vstring});
 
-push @s, $r{state} if (defined $r{state} && $self->{debug});
+push @s, $r{state} if(defined $r{state} && $self->{debug});
 
 return join(" ", @s);
 }
@@ -1779,18 +1779,14 @@ sub init
   my %match = $self->process($qserver, $qport,
   $initrule{header}, $initrule{query}, \@ruleset);
 
-  if(!defined $match{product}){
+  if(defined $match{product}){
+    return %match;
+    }else {
   #For backwards compatibility with old fingerprint code which never set the rd
    $ignore_recurse = 1;
-  my %old_match = $self->process($qserver, $qport,
+ return $self->process($qserver, $qport,
   $old_initrule{header}, $old_initrule{query}, \@old_ruleset);
-
-  if(defined $old_match{product}){
-    return %old_match;
-   }
   }
-
-  return %match;
 }
 
 sub process
