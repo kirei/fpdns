@@ -1,30 +1,30 @@
 /*
-    Copyright (c) 2011 Verisign, Inc. All rights reserved.
+Copyright (c) 2011 Verisign, Inc. All rights reserved.
 
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions
-    are met:
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
 
-    1. Redistributions of source code must retain the above copyright
-       notice, this list of conditions and the following disclaimer.
-    2. Redistributions in binary form must reproduce the above copyright
-       notice, this list of conditions and the following disclaimer in the
-       documentation and/or other materials provided with the distribution.
-    3. The name of the authors may not be used to endorse or promote products
-       derived from this software without specific prior written permission.
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+derived from this software without specific prior written permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-    IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-    OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-    IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-    NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-*/
+ */
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -39,10 +39,21 @@ import org.apache.commons.collections.map.MultiValueMap;
 public class Main {
 
   public static final int NUM_RESPONSES = 4528;
-  // comma separated string of what versions of response collector output this generator can handle
-  public static final String RESPONSE_COLLECTOR_VERSIONS = "0.1";
 
   public static void main(String[] args) {
+    String outputFormat = "perlFPDNS";
+    String queriesFilePath = args[0];
+    String responseFilesPath = args[1];
+    String[] serverResponseFilePaths = getResponseFiles(responseFilesPath);
+    int numServers = serverResponseFilePaths.length;
+    DNSServer servers[] = initServers(numServers, serverResponseFilePaths);
+    int queryIndexes[] = getUniqueQueries(numServers, servers);
+    QueryTree queryTree = new QueryTree(new Node(), queryIndexes);
+    queryTree.allQueries = getAllQueries(NUM_RESPONSES, queriesFilePath);
+    Node rootNode = queryTree.root;
+    DNSServer s;
+
+
     if (args.length == 0) {
       System.out.println("Missing arguments. Specify paths to response files and query file");
       return;
@@ -52,32 +63,20 @@ public class Main {
       System.out.println("Missing argument. Specify path to response files directory");
       return;
     }
-    String outputFormat = "perlFPDNS";
 
-    if(args.length >= 3){
-      if(args[2].equals("xml")){
+    if (args.length >= 3) {
+      if (args[2].equals("xml")) {
         outputFormat = "xml";
       }
     }
 
-    String queriesFilePath = args[0];
-    String responseFilesPath = args[1];
-    String[] serverResponseFilePaths = getResponseFiles(responseFilesPath);
-    int numServers = serverResponseFilePaths.length;
-    DNSServer servers[] = initServers(numServers, serverResponseFilePaths);
-    int queryIndexes[] = getUniqueQueries(numServers, servers);
-
-    DNSServer s;
-    QueryTree queryTree = new QueryTree(new Node(), queryIndexes);
-    queryTree.allQueries = getAllQueries(NUM_RESPONSES, queriesFilePath);
-
-    Node rootNode = queryTree.root;
-    for(int i=0; i<queryTree.allQueries.length; i++){
-      if(queryTree.allQueries[i].isSupportedByLibrary(LibConstants.PERL_LIB)){
+    for (int i = 0; i < queryTree.allQueries.length; i++) {
+      if (queryTree.allQueries[i].isSupportedByLibrary(LibConstants.RUBY_LIB)) {
         rootNode.query = i;
         break;
       }
     }
+
     for (int i = 0; i < servers.length; i++) {
       s = servers[i];
       String rsp = s.responses[rootNode.query];
@@ -87,14 +86,11 @@ public class Main {
     }
     queryTree.growTree();
 
-    
-      if(outputFormat.equals("xml")){
-        System.out.println(queryTree.getXML());
-      }else{
-        System.out.println(queryTree.getPerlFPDNSFormat());
-      }
-    
-    
+    if (outputFormat.equals("xml")) {
+      System.out.println(queryTree.getXML());
+    } else {
+      System.out.println(queryTree.getPerlFPDNSFormat());
+    }
   }
 
   /**
@@ -166,7 +162,6 @@ public class Main {
     }
     return queries;
   }
-
 
   /**
    * Get the queries that will return unique responses
