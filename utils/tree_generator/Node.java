@@ -143,10 +143,21 @@ class Node {
    * @return the index of the response in the array list
    */
   int addResponseToArrayList(ArrayList<String> responses, String response) {
-    if (!responses.contains(response)) {
-      responses.add(response);
+    int indexFound = -1;
+
+    for(String resp: responses){
+      if(response.matches(resp)){
+        indexFound = responses.indexOf(resp);
+      }
     }
-    return responses.indexOf(response);
+
+    if (indexFound == -1) {
+      responses.add(response);
+      
+      return responses.indexOf(response);
+    }
+
+    return indexFound;
   }
 
   /**
