@@ -39,10 +39,12 @@ public class QueryTree {
   Node root;
   int queries[];
   Query[] allQueries;
+  Map<String, Map<String, String>> DNS_LIB;
 
-  QueryTree(Node n, int qrs[]) {
+  QueryTree(Node n, int qrs[], Map<String, Map<String, String>> dns_lib) {
     this.root = n;
     this.queries = qrs;
+    this.DNS_LIB = dns_lib;
   }
 
   public void growTree() {
@@ -134,7 +136,7 @@ public class QueryTree {
       List serverList = ((List) cur.multipleHits.get(response));
       for (int queryIndex : this.queries) {
         //If an opcode is not supported, then skip it
-        if (!this.allQueries[queryIndex].isSupportedByLibrary(LibConstants.PERL_LIB)) {
+        if (!this.allQueries[queryIndex].isSupportedByLibrary(this.DNS_LIB)) {
           continue;
         }
 
@@ -268,20 +270,21 @@ public class QueryTree {
   }
 
   /**
+   * Find the nth occurrence of a substring within a string
    *
    * @param str
    * @param needle
-   * @param occurence
-   * @return
+   * @param occurrence
+   * @return an int representing the start of nth occurrence of the specified string or -1 if it was not found
    * @throws IndexOutOfBoundsException
    */
-  private static int findNthIndexOf(String str, String needle, int occurence)
+  private static int findNthIndexOf(String str, String needle, int occurrence)
           throws IndexOutOfBoundsException {
     int index = -1;
     Pattern p = Pattern.compile(needle, Pattern.MULTILINE);
     Matcher m = p.matcher(str);
     while (m.find()) {
-      if (--occurence == 0) {
+      if (--occurrence == 0) {
         index = m.start();
         break;
       }

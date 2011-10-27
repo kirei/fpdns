@@ -33,6 +33,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.commons.collections.map.MultiValueMap;
 
@@ -42,17 +43,16 @@ public class Main {
 
   public static void main(String[] args) {
     String outputFormat = "perlFPDNS";
-    String queriesFilePath = args[0];
-    String responseFilesPath = args[1];
-    String[] serverResponseFilePaths = getResponseFiles(responseFilesPath);
-    int numServers = serverResponseFilePaths.length;
-    DNSServer servers[] = initServers(numServers, serverResponseFilePaths);
-    int queryIndexes[] = getUniqueQueries(numServers, servers);
-    QueryTree queryTree = new QueryTree(new Node(), queryIndexes);
-    queryTree.allQueries = getAllQueries(NUM_RESPONSES, queriesFilePath);
-    Node rootNode = queryTree.root;
+    String queriesFilePath;
+    String responseFilesPath;
+    String[] serverResponseFilePaths;
+    int numServers;
+    DNSServer servers[];
+    int queryIndexes[];
+    QueryTree queryTree;
+    Node rootNode;
     DNSServer s;
-
+    Map<String, Map<String, String>> DNS_LIB = LibConstants.PERL_LIB;
 
     if (args.length == 0) {
       System.out.println("Missing arguments. Specify paths to response files and query file");
@@ -68,10 +68,25 @@ public class Main {
       if (args[2].equals("xml")) {
         outputFormat = "xml";
       }
+
+      if (args.length >= 4){
+        if(args[3].equals("ruby"))
+        DNS_LIB = LibConstants.RUBY_LIB;
+      }
     }
 
+    queriesFilePath = args[0];
+    responseFilesPath = args[1];
+    serverResponseFilePaths = getResponseFiles(responseFilesPath);
+    numServers = serverResponseFilePaths.length;
+    servers = initServers(numServers, serverResponseFilePaths);
+    queryIndexes = getUniqueQueries(numServers, servers);
+    queryTree = new QueryTree(new Node(), queryIndexes, DNS_LIB);
+    queryTree.allQueries = getAllQueries(NUM_RESPONSES, queriesFilePath);
+    rootNode = queryTree.root;
+
     for (int i = 0; i < queryTree.allQueries.length; i++) {
-      if (queryTree.allQueries[i].isSupportedByLibrary(LibConstants.RUBY_LIB)) {
+      if (queryTree.allQueries[i].isSupportedByLibrary(DNS_LIB)) {
         rootNode.query = i;
         break;
       }
