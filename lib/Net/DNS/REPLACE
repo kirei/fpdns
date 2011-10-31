@@ -1,6 +1,8 @@
 After you generate a perl tree from the generator, go through it and replace the
 non-responses with the right error.
 
+-------------------------------------------------------------------------------
+
 "0,QUERY,0,0,1,0,0,0,NOERROR,1,0,0,0" => "header section incomplete" #Unbound
 
 "0.+" => "query timed out" #Windows Server(s)
@@ -40,3 +42,11 @@ should become
 { fingerprint => ".+", state=>"q0r3q1r3q2r7q3r9q4r11q5r?" },
 
 if you follow the replace instructions
+
+There is an unresolved bug where BIND 9.4.0 -- 9.5.1 identifies as BIND 9.6.0, this is
+temporarily fixed by replacing
+{ fingerprint => $iq[21], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.0"}, },
+
+with
+
+{ fingerprint => $iq[21], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.0 OR 9.4.0 -- 9.5.1"}, },
