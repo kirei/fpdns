@@ -143,22 +143,13 @@ class Node {
    * @return the index of the response in the array list
    */
   int addResponseToArrayList(ArrayList<String> responses, String response) {
-    int indexFound = -1;
-
-    for(String resp: responses){
-      if(response.matches(resp)){
-        indexFound = responses.indexOf(resp);
-      }
-    }
-
-    if (indexFound == -1) {
+    if (!responses.contains(response)) {
       responses.add(response);
-      
-      return responses.indexOf(response);
     }
-
-    return indexFound;
+    return responses.indexOf(response);
   }
+
+
 
   /**
    * Add a queryIndex to an array list of query indices if it isn't already in the array list
