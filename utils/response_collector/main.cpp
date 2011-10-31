@@ -29,6 +29,7 @@
 #include "functions.h"
 
 #include <iostream>
+#include <cstdlib>
 #include <stdio.h>
 #include <string.h>
 #include <vantages/dns_defs.h>
