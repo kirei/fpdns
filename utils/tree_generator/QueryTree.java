@@ -135,7 +135,7 @@ public class QueryTree {
 
       List serverList = ((List) cur.multipleHits.get(response));
       for (int queryIndex : this.queries) {
-        //If an opcode is not supported, then skip it
+        //If a query is not supported, then skip it
         if (!this.allQueries[queryIndex].isSupportedByLibrary(this.DNS_LIB)) {
           continue;
         }
