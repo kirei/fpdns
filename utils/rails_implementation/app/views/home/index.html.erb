@@ -1,0 +1,38 @@
+<h1>DNS Fingerprinting</h1>
+<hr/>
+
+<%= form_tag() do %>
+  <h3>Enter Server Address</h3>
+  <%= text_field_tag(:server_address, params[:server_address]) %><br/>
+  <%= submit_tag("Submit", :id=>'submit') %>
+<% end %>
+<hr/>
+
+<% if request.request_method == "POST" %>
+
+ <% if !@error.empty? %>
+    <div class="results error">
+      Error: <%= @error  %>
+    </div>
+  <% elsif @results.empty? %>
+    <div class="results notice">
+      No match found.
+    </div>
+  <% else %>
+    <div class="results success">
+      <%= @results %>
+    </div>
+  <% end %>
+
+
+  <% if !@debug_output.empty? %>
+    <div id="debug-output">
+      <pre>
+        <%= @debug_output %>
+      </pre>
+    </div>
+  <% end %>
+
+  <hr/>
+<% end %>
+<a href="https://github.com/kirei/fpdns" class="footer-text">FPDNS on Github</a>

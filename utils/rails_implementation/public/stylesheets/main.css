@@ -1,0 +1,55 @@
+h1 {
+  text-align: center;
+  padding: 10px;
+}
+
+h3 {
+  text-align: center;
+}
+
+body {
+  background-color: #BBB;
+}
+
+.container {
+  background-color: #fff;
+  padding: 5px;
+  border: 2px solid #ccc;
+  border-top: none;
+  border-bottom: none;
+}
+
+#server_address {
+  height: 25px;
+  width: 500px;
+  margin: 5px auto;
+  display: block;
+  font-size: 20px;
+  padding-left: 10px;
+  text-align: center
+}
+
+#submit {
+  display: block;
+  margin: 10px auto;
+  width: 100px;
+  height: 25px;
+  text-align: center;
+}
+
+.results {
+  display: block;
+  width: 300px;
+  font-size: 20px;
+  height: 30px;
+  padding: 5px;
+  margin: 10px auto;
+  text-align: center;
+}
+
+.footer-text {
+  display: block;
+  margin: 5px auto;
+  width: 100px;
+  text-decoration: none;
+}
