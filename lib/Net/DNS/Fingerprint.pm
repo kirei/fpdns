@@ -1,3 +1,8 @@
+#!/usr/bin/perl
+#
+# $Id: Fingerprint.pm,v 1.17 2005/09/05 13:33:36 jakob Exp $
+#
+# Copyright (c) 2011 Verisign, Inc.
 # Copyright (c) 2003,2004,2005 Roy Arends & Jakob Schlyter.
 # All rights reserved.
 #
@@ -32,22 +37,378 @@ use strict;
 use warnings;
 use Net::DNS 0.42;
 
-our $VERSION = "0.9.4-current";
+our $VERSION = "0.10.0";
 
 my %default = (
-    source    => undef,
-    timeout   => 5,
-    retry     => 1,
-    forcetcp  => 0,
-    debug     => 0,
-    qversion  => 0,
-    qchaos    => 0,
-    separator => " ",
+    source   => undef,
+    timeout  => 5,
+    retry    => 1,
+    forcetcp => 0,
+    debug    => 0,
+    qversion => 0,
+    qchaos   => 0,
 );
 
 my $versionlength = 40;
 
+my $ignore_recurse = 0;
+
 my @qy = (
+    "0,QUERY,0,0,0,0,0,0,NOERROR,0,0,0,0",          #qy0
+    "0,QUERY,0,0,0,1,0,1,NOERROR,0,0,0,0",          #qy1
+    "0,NS_NOTIFY_OP,0,1,1,0,1,1,NOTIMP,0,0,0,0",    #qy2
+    "0,IQUERY,0,0,0,1,1,1,NOERROR,0,0,0,0",         #qy3
+    "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",          #qy4
+    "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",          #qy5
+    "0,IQUERY,0,1,1,0,0,0,NOTIMP,0,0,0,0",          #qy6
+    "0,QUERY,0,0,0,0,0,1,NOTIMP,0,0,0,0",           #qy7
+    "0,UPDATE,0,0,1,0,0,0,NOERROR,0,0,0,0",         #qy8
+    "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",          #qy9
+    "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",          #qy10
+    "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",          #qy11
+);
+
+my @nct = (
+    ". IN A",                                       #nct0
+    ". IN A",                                       #nct1
+    ". IN A",                                       #nct2
+    ". IN A",                                       #nct3
+    "jjjjjjjjjjjj. CH A",                           #nct4
+    "jjjjjjjjjjjj. CH RRSIG",                       #nct5
+    ". IN A",                                       #nct6
+    ". IN A",                                       #nct7
+    ". IN A",                                       #nct8
+    ". IN DNSKEY",                                  #nct9
+    "jjjjjjjjjjjj. ANY TKEY",                       #nct10
+    ". IN IXFR",                                    #nct11
+);
+
+my %initrule = (header => $qy[0], query => $nct[0],);
+my @iq = (
+    "1,QUERY,0,0,0,0,0,0,SERVFAIL,1,0,0,0",           #iq0
+    "1,QUERY,0,0,0,0,0,0,NXDOMAIN,1,0,0,0",           #iq1
+    "1,QUERY,0,0,0,0,0,0,NOERROR,1,0,0,0",            #iq2
+    "1,QUERY,0,0,0,1,0,0,NOERROR,.+,.+,.+,.+",        #iq3
+    "1,NS_NOTIFY_OP,0,0,1,1,0,1,FORMERR,1,0,0,0",     #iq4
+    "1,NS_NOTIFY_OP,0,0,1,1,0,0,FORMERR,1,0,0,0",     #iq5
+    "1,NS_NOTIFY_OP,0,0,1,1,0,0,REFUSED,1,0,0,0",     #iq6
+    "0,NS_NOTIFY_OP,0,1,1,0,1,1,NOTIMP,1,0,0,0",      #iq7
+    "1,IQUERY,0,0,0,1,0,0,NOTIMP,1,0,0,0",            #iq8
+    "0,IQUERY,0,0,0,1,1,1,NOERROR,1,0,0,0",           #iq9
+    "1,QUERY,0,0,1,0,0,0,NOTIMP,1,0,0,0",             #iq10
+    "0,QUERY,0,0,1,0,0,0,NOERROR,1,0,0,0",            #iq11
+    "1,NS_NOTIFY_OP,0,0,1,1,0,0,SERVFAIL,1,0,0,0",    #iq12
+    "1,IQUERY,0,0,1,1,0,0,SERVFAIL,1,0,0,0",          #iq13
+    "1,IQUERY,0,0,1,1,0,0,NOTIMP,0,0,0,0",            #iq14
+    "1,QUERY,0,0,0,1,0,0,NOTIMP,.+,.+,.+,.+",         #iq15
+    "1,QUERY,0,0,0,1,0,1,NOERROR,.+,.+,.+,.+",        #iq16
+    "1,UPDATE,0,0,1,1,0,0,FORMERR,1,0,0,0",           #iq17
+    "1,QUERY,0,0,1,0,0,0,SERVFAIL,1,0,0,0",           #iq18
+    "1,QUERY,0,0,1,0,0,0,REFUSED,1,0,0,0",            #iq19
+    "1,UPDATE,0,0,1,1,0,0,FORMERR,0,0,0,0",           #iq20
+    "1,QUERY,0,0,1,1,0,0,NOERROR,.+,.+,.+,.+",        #iq21
+    "1,QUERY,0,1,1,1,0,0,NOERROR,.+,.+,.+,.+",        #iq22
+    "1,QUERY,0,0,0,0,0,0,REFUSED,0,0,0,0",            #iq23
+    "1,QUERY,0,0,1,1,0,0,REFUSED,1,0,0,0",            #iq24
+    "1,QUERY,0,0,1,1,0,0,NXDOMAIN,.+,.+,.+,.+",       #iq25
+);
+
+my @ruleset = (
+    {
+        fingerprint => $iq[0],
+        result      => {
+            vendor  => "NLnetLabs",
+            product => "NSD",
+            version => "3.1.0 -- 3.2.8"
+        },
+    },
+    {
+        fingerprint => $iq[1],
+        result =>
+          { vendor => "Unlogic", product => "Eagle DNS", version => "1.1.1" },
+    },
+    {
+        fingerprint => $iq[2],
+        result      => {
+            vendor  => "Unlogic",
+            product => "Eagle DNS",
+            version => "1.0 -- 1.0.1"
+        },
+    },
+    {
+        fingerprint => $iq[3],
+        header      => $qy[1],
+        query       => $nct[1],
+        ruleset     => [
+            {
+                fingerprint => $iq[3],
+                header      => $qy[2],
+                query       => $nct[2],
+                ruleset     => [
+                    {
+                        fingerprint => $iq[4],
+                        result      => {
+                            vendor  => "ISC",
+                            product => "BIND",
+                            version => "9.3.0 -- 9.3.6-P1"
+                        },
+                    },
+                    {
+                        fingerprint => $iq[5],
+                        result      => {
+                            vendor  => "ISC",
+                            product => "BIND",
+                            version => "9.2.3 -- 9.2.9"
+                        },
+                    },
+                    {
+                        fingerprint => $iq[6],
+                        result      => {
+                            vendor  => "ISC",
+                            product => "BIND",
+                            version => "9.1.1 -- 9.1.3"
+                        },
+                    },
+                    {
+                        fingerprint => "query timed out",
+                        header      => $qy[3],
+                        query       => $nct[3],
+                        ruleset     => [
+                            {
+                                fingerprint => $iq[8],
+                                result      => {
+                                    vendor  => "Microsoft",
+                                    product => "Windows DNS",
+                                    version => "2003"
+                                },
+                            },
+                            {
+                                fingerprint => "query timed out",
+                                header      => $qy[4],
+                                query       => $nct[4],
+                                ruleset     => [
+                                    {
+                                        fingerprint => $iq[10],
+                                        result      => {
+                                            vendor  => "Microsoft",
+                                            product => "Windows DNS",
+                                            version => "2003 R2"
+                                        },
+                                    },
+                                    {
+                                        fingerprint => "query timed out",
+                                        header      => $qy[5],
+                                        query       => $nct[5],
+                                        ruleset     => [
+                                            {
+                                                fingerprint =>
+                                                  "query timed out",
+                                                result => {
+                                                    vendor  => "Microsoft",
+                                                    product => "Windows DNS",
+                                                    version => "2008 R2"
+                                                },
+                                            },
+                                            {
+                                                fingerprint => $iq[10],
+                                                result      => {
+                                                    vendor  => "Microsoft",
+                                                    product => "Windows DNS",
+                                                    version => "2008"
+                                                },
+                                            },
+                                            {
+                                                fingerprint => ".+",
+                                                state =>
+                                                  "q0r3q1r3q2r7q3r9q4r11q5r?"
+                                            },
+                                        ]
+                                    },
+                                ]
+                            },
+                        ]
+                    },
+                    {
+                        fingerprint => $iq[12],
+                        header      => $qy[6],
+                        query       => $nct[6],
+                        ruleset     => [
+                            {
+                                fingerprint => $iq[13],
+                                result      => {
+                                    vendor  => "",
+                                    product => "Google DNS",
+                                    version => ""
+                                },
+                            },
+                            {
+                                fingerprint => $iq[14],
+                                header      => $qy[7],
+                                query       => $nct[7],
+                                ruleset     => [
+                                    {
+                                        fingerprint => $iq[15],
+                                        result      => {
+                                            vendor  => "ISC",
+                                            product => "BIND",
+                                            version => "9.2.0rc3"
+                                        },
+                                    },
+                                    {
+                                        fingerprint => $iq[3],
+                                        result      => {
+                                            vendor  => "ISC",
+                                            product => "BIND",
+                                            version => "9.2.0 -- 9.2.2-P3"
+                                        },
+                                    },
+                                    {
+                                        fingerprint => ".+",
+                                        state => "q0r3q1r3q2r7r12q6r14q7r?"
+                                    },
+                                ]
+                            },
+                        ]
+                    },
+                ]
+            },
+            {
+                fingerprint => $iq[16],
+                header      => $qy[2],
+                query       => $nct[2],
+                ruleset     => [
+                    {
+                        fingerprint => "query timed out",
+                        result      => {
+                            vendor  => "Microsoft",
+                            product => "Windows DNS",
+                            version => "2000"
+                        },
+                    },
+                    {
+                        fingerprint => $iq[4],
+                        header      => $qy[8],
+                        query       => $nct[8],
+                        ruleset     => [
+                            {
+                                fingerprint => $iq[17],
+                                header      => $qy[4],
+                                query       => $nct[4],
+                                ruleset     => [
+                                    {
+                                        fingerprint => $iq[18],
+                                        result      => {
+                                            vendor  => "ISC",
+                                            product => "BIND",
+                                            version => "9.7.2"
+                                        },
+                                    },
+                                    {
+                                        fingerprint => $iq[19],
+                                        result      => {
+                                            vendor  => "ISC",
+                                            product => "BIND",
+                                            version => "9.6.3 -- 9.7.3"
+                                        },
+                                    },
+                                    {
+                                        fingerprint => ".+",
+                                        state => "q0r3q1r3r16q2r4q8r17q4r?"
+                                    },
+                                ]
+                            },
+                            {
+                                fingerprint => $iq[20],
+                                header      => $qy[4],
+                                query       => $nct[4],
+                                ruleset     => [
+                                    {
+                                        fingerprint => $iq[19],
+                                        result      => {
+                                            vendor  => "ISC",
+                                            product => "BIND",
+                                            version => "9.5.2 -- 9.7.1"
+                                        },
+                                    },
+                                    {
+                                        fingerprint => $iq[18],
+                                        header      => $qy[9],
+                                        query       => $nct[9],
+                                        ruleset     => [
+                                            {
+                                                fingerprint => $iq[21],
+                                                result      => {
+                                                    vendor  => "ISC",
+                                                    product => "BIND",
+                                                    version =>
+                                                      "9.6.0 OR 9.4.0 -- 9.5.1"
+                                                },
+                                            },
+                                            {
+                                                fingerprint => $iq[22],
+                                                result      => {
+                                                    vendor  => "ISC",
+                                                    product => "BIND",
+                                                    version => "9.4.0 -- 9.5.1"
+                                                },
+                                            },
+                                            {
+                                                fingerprint => ".+",
+                                                state =>
+"q0r3q1r3r16q2r4q8r17r20q4r18q9r?"
+                                            },
+                                        ]
+                                    },
+                                ]
+                            },
+                        ]
+                    },
+                ]
+            },
+        ]
+    },
+    {
+        fingerprint => $iq[23],
+        header      => $qy[10],
+        query       => $nct[10],
+        ruleset     => [
+            {
+                fingerprint => $iq[24],
+                result      => {
+                    vendor  => "NLnetLabs",
+                    product => "Unbound",
+                    version => "1.3.0 -- 1.4.0"
+                },
+            },
+            {
+                fingerprint => $iq[25],
+                header      => $qy[11],
+                query       => $nct[11],
+                ruleset     => [
+                    {
+                        fingerprint => "header section incomplete",
+                        result      => {
+                            vendor  => "NLnetLabs",
+                            product => "Unbound",
+                            version => "1.4.1 -- 1.4.9"
+                        },
+                    },
+                    {
+                        fingerprint => $iq[19],
+                        result      => {
+                            vendor  => "NLnetLabs",
+                            product => "Unbound",
+                            version => "1.4.10 -- 1.4.12"
+                        },
+                    },
+                    { fingerprint => ".+", state => "q0r3r23q10r25q11r?" },
+                ]
+            },
+        ]
+    },
+);
+
+my @qy_old = (
     "0,IQUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",
     "0,NS_NOTIFY_OP,0,0,0,0,0,0,NOERROR,0,0,0,0",
     "0,QUERY,0,0,0,0,0,0,NOERROR,0,0,0,0",
@@ -59,21 +420,20 @@ my @qy = (
     "0,QUERY,0,0,0,0,0,1,NOERROR,0,0,0,0",
 );
 
-my %initrule = (header => $qy[2], query => ". IN MAILB",);
+my %old_initrule = (header => $qy_old[2], query => ". IN MAILB",);
 
-# my %initrule = (header => $qy[0], query  => ". IN A", );
-my @iq = (
-    "1,IQUERY,0,0,1,0,0,0,FORMERR,0,0,0,0",    # iq0
-    "1,IQUERY,0,0,1,0,0,0,FORMERR,1,0,0,0",    # iq1
-    "1,IQUERY,0,0,1,0,0,0,NOTIMP,0,0,0,0",     # iq2
-    "1,IQUERY,0,0,1,0,0,0,NOTIMP,1,0,0,0",     # iq3
-    "1,IQUERY,0,0,1,1,0,0,FORMERR,0,0,0,0",    # iq4
-    "1,IQUERY,0,0,1,1,0,0,NOTIMP,0,0,0,0",     # iq5
-    "1,IQUERY,0,0,1,1,0,0,NOTIMP,1,0,0,0",     # iq6
-    "1,IQUERY,1,0,1,0,0,0,NOTIMP,1,0,0,0",     # iq7
+my @iq_old = (
+    "1,IQUERY,0,0,1,0,0,0,FORMERR,0,0,0,0",    # iq_old0
+    "1,IQUERY,0,0,1,0,0,0,FORMERR,1,0,0,0",    # iq_old1
+    "1,IQUERY,0,0,1,0,0,0,NOTIMP,0,0,0,0",     # iq_old2
+    "1,IQUERY,0,0,1,0,0,0,NOTIMP,1,0,0,0",     # iq_old3
+    "1,IQUERY,0,0,1,1,0,0,FORMERR,0,0,0,0",    # iq_old4
+    "1,IQUERY,0,0,1,1,0,0,NOTIMP,0,0,0,0",     # iq_old5
+    "1,IQUERY,0,0,1,1,0,0,NOTIMP,1,0,0,0",     # iq_old6
+    "1,IQUERY,1,0,1,0,0,0,NOTIMP,1,0,0,0",     # iq_old7
     "1,QUERY,1,0,1,0,0,0,NOTIMP,1,0,0,0",
     "1,QUERY,0,0,0,0,0,0,NOTIMP,0,0,0,0",
-    "1,IQUERY,0,0,1,1,0,0,FORMERR,1,0,0,0",    # iq10
+    "1,IQUERY,0,0,1,1,0,0,FORMERR,1,0,0,0",    # iq_old10
     "1,NS_NOTIFY_OP,0,0,0,0,0,0,FORMERR,1,0,0,0",
     "1,NS_NOTIFY_OP,0,0,0,0,0,0,NOTIMP,0,0,0,0",
     "1,NS_NOTIFY_OP,0,0,0,0,0,0,NOTIMP,1,0,0,0",
@@ -83,7 +443,7 @@ my @iq = (
     "1,NS_NOTIFY_OP,0,0,0,1,0,0,FORMERR,1,0,0,0",
     "1,NS_NOTIFY_OP,0,0,0,1,0,0,NOTIMP,0,0,0,0",
     "1,NS_NOTIFY_OP,0,0,0,1,0,0,NOTIMP,1,0,0,0",
-    "1,NS_NOTIFY_OP,0,0,0,1,0,0,REFUSED,1,0,0,0",    # iq20
+    "1,NS_NOTIFY_OP,0,0,0,1,0,0,REFUSED,1,0,0,0",    # iq_old20
     "1,NS_NOTIFY_OP,0,0,0,1,0,0,SERVFAIL,1,0,0,0",
     "1,NS_NOTIFY_OP,1,0,0,0,0,0,NOTIMP,1,0,0,0",
     "1,QUERY,1,0,0,0,0,0,NOTIMP,1,0,0,0",
@@ -93,7 +453,7 @@ my @iq = (
     "1,IQUERY,0,0,1,1,1,1,FORMERR,0,0,0,0",
     "1,IQUERY,1,0,1,1,1,1,FORMERR,0,0,0,0",
     "1,QUERY,.,0,1,.,.,.,NOTIMP,.+,.+,.+,.+",
-    "1,QUERY,.,0,1,.,.,.,.+,.+,.+,.+,.+",            #iq30
+    "1,QUERY,.,0,1,.,.,.,.+,.+,.+,.+,.+",            #iq_old30
     "1,QUERY,0,0,.,.,0,0,NXDOMAIN,1,0,0,0",
     "1,QUERY,0,0,.,.,0,0,FORMERR,1,0,0,0",
     "1,UPDATE,0,0,0,0,0,0,NOTIMP,0,0,0,0",
@@ -103,7 +463,7 @@ my @iq = (
     "1,QUERY,0,0,0,0,0,0,NOERROR,1,0,.+,0",
     "1,QUERY,0,0,1,0,0,0,FORMERR,1,0,0,0",
     "1,IQUERY,0,0,1,0,1,1,NOTIMP,1,0,0,0",
-    "1,IQUERY,0,0,0,1,1,1,REFUSED,1,0,0,0",          #iq40
+    "1,IQUERY,0,0,0,1,1,1,REFUSED,1,0,0,0",          #iq_old40
     "1,UPDATE,0,0,0,1,0,0,REFUSED,1,0,0,0",
     "1,IQUERY,0,0,0,1,1,1,FORMERR,0,0,0,0",
     "1,IQUERY,0,0,0,1,0,0,NOTIMP,0,0,0,0",
@@ -111,9 +471,9 @@ my @iq = (
     "1,UPDATE,0,0,0,0,0,0,FORMERR,1,0,0,0",
     "1,UPDATE,0,0,0,0,0,0,FORMERR,0,0,0,0",
     "1,QUERY,0,0,1,0,0,0,FORMERR,0,0,0,0",
-    "1,QUERY,0,0,1,0,0,0,SERVFAIL,1,0,0,0",          #iq48
+    "1,QUERY,0,0,1,0,0,0,SERVFAIL,1,0,0,0",          #iq_old48
     "1,QUERY,1,0,1,0,0,0,NXDOMAIN,1,0,1,0",
-    "1,QUERY,0,0,1,0,0,0,REFUSED,1,0,0,0",           #iq50
+    "1,QUERY,0,0,1,0,0,0,REFUSED,1,0,0,0",           #iq_old50
     "1,QUERY,0,0,1,0,0,0,NOERROR,1,1,0,0",
     "1,IQUERY,0,0,1,0,0,0,REFUSED,0,0,0,0",
     "1,QUERY,0,0,0,0,0,0,FORMERR,0,0,0,0",
@@ -123,7 +483,7 @@ my @iq = (
     "1,QUERY,0,0,1,0,0,0,.+,.+,.+,.+,.+",
     "1,QUERY,1,0,1,0,0,0,NOERROR,1,1,0,0",
     "1,QUERY,0,0,1,1,0,0,SERVFAIL,1,0,0,0",
-    "1,QUERY,1,0,1,1,0,0,NOERROR,1,1,0,0",           #iq60
+    "1,QUERY,1,0,1,1,0,0,NOERROR,1,1,0,0",           #iq_old60
     "1,QUERY,0,0,1,1,0,0,REFUSED,1,0,0,0",
     "1,QUERY,0,0,0,0,0,0,NOTIMP,1,0,0,0",
     "1,QUERY,1,0,1,1,0,0,NOERROR,1,0,1,0",
@@ -133,7 +493,7 @@ my @iq = (
     "1,IQUERY,0,0,0,1,0,0,NOTIMP,1,0,0,0",
     "1,QUERY,0,1,1,1,1,1,NOERROR,1,0,.,0",
     "1,QUERY,0,1,1,1,0,1,NOERROR,1,0,.,0",
-    "1,IQUERY,0,0,1,0,0,0,REFUSED,1,0,0,0",          #iq70
+    "1,IQUERY,0,0,1,0,0,0,REFUSED,1,0,0,0",          #iq_old70
     "1,IQUERY,1,0,1,1,1,1,NOTIMP,1,0,0,0",
     "1,IQUERY,0,0,1,0,0,0,NOERROR,1,0,0,0",
     "1,QUERY,1,0,1,1,0,0,NOERROR,1,0,0,0",
@@ -143,7 +503,7 @@ my @iq = (
     "1,QUERY,0,0,1,1,0,0,FORMERR,1,0,0,0",
     "1,QUERY,0,0,0,1,0,0,SERVFAIL,1,0,0,0",
     "1,QUERY,0,0,1,1,0,0,NOERROR,1,1,0,0",
-    "1,IQUERY,1,0,1,0,0,0,NOERROR,1,0,1,0",          #iq80
+    "1,IQUERY,1,0,1,0,0,0,NOERROR,1,0,1,0",          #iq_old80
     "1,IQUERY,1,0,1,1,0,0,NOTIMP,1,0,0,0",
     "1,QUERY,0,0,1,1,0,0,NOERROR,1,0,0,0",
     "1,QUERY,1,0,1,1,0,0,NOERROR,1,1,1,.+",
@@ -152,50 +512,53 @@ my @iq = (
     "1,QUERY,1,0,0,1,0,0,NXDOMAIN,1,0,0,0",
     "1,QUERY,0,0,0,1,0,0,NOTIMP,0,0,0,0",
     "1,QUERY,0,0,0,0,0,0,REFUSED,1,0,0,0",
-    "1,QUERY,1,0,1,1,0,0,NXDOMAIN,1,0,0,0",          #iq89
-    "1,QUERY,1,0,0,0,0,0,NOERROR,1,1,0,0",           #iq90
+    "1,QUERY,1,0,1,1,0,0,NXDOMAIN,1,0,0,0",          #iq_old89
+    "1,QUERY,1,0,0,0,0,0,NOERROR,1,1,0,0",           #iq_old90
     "1,IQUERY,1,0,1,1,0,1,NOTIMP,1,0,0,0",
     "1,QUERY,0,0,0,1,0,0,NOTIMP,1,0,0,0",
     "1,QUERY,0,0,1,0,0,1,SERVFAIL,1,0,0,0",
-    "1,QUERY,0,0,0,1,0,0,NOERROR,1,0,13,13",         #iq94
-    "1,QUERY,0,0,0,1,0,0,NOERROR,1,0,1,0",           #iq95
+    "1,QUERY,0,0,0,1,0,0,NOERROR,1,0,13,13",         #iq_old94
+    "1,QUERY,0,0,0,1,0,0,NOERROR,1,0,1,0",           #iq_old95
     "1,QUERY,0,0,1,0,0,0,NOERROR,1,0,13,13",
-    "1,IQUERY,1,0,0,0,0,0,NOTIMP,1,0,0,0",           #iq97
-    "1,IQUERY,1,0,0,0,1,1,NOTIMP,1,0,0,0",           #iq98
-    "1,IQUERY,0,0,1,1,0,0,NOERROR,1,0,1,0",          #iq99
-    "1,QUERY,.,0,1,0,0,0,NOERROR,1,0,0,0",           #iq100
+    "1,IQUERY,1,0,0,0,0,0,NOTIMP,1,0,0,0",           #iq_old97
+    "1,IQUERY,1,0,0,0,1,1,NOTIMP,1,0,0,0",           #iq_old98
+    "1,IQUERY,0,0,1,1,0,0,NOERROR,1,0,1,0",          #iq_old99
+    "1,QUERY,.,0,1,0,0,0,NOERROR,1,0,0,0",           #iq_old100
     "1,QUERY,0,0,1,0,0,0,NXDOMAIN,1,0,0,0",          #101
 );
 
-my @ruleset = (
+my @old_ruleset = (
     {
-        fingerprint => $iq[89],
-        result =>
-          { vendor => "Simon Kelley", product => "dnsmasq", version => "" },
+        fingerprint => $iq_old[89],
+        result      => {
+            vendor  => "Simon Kelley",
+            product => "dnsmasq",
+            version => ""
+        },
         qv => "version.bind",
     },
     {
         fingerprint => ".+",
-        header      => $qy[0],
+        header      => $qy_old[0],
         query       => ". IN A",
         ruleset     => [
             {
                 fingerprint => "query timed out",
-                header      => $qy[0],
+                header      => $qy_old[0],
                 query       => "com. IN A",
                 ruleset     => [
                     {
                         fingerprint => "query timed out",
-                        header      => $qy[7],
+                        header      => $qy_old[7],
                         query       => ". CH A",
                         ruleset     => [
                             {
                                 fingerprint => "query timed out",
-                                header      => $qy[6],
+                                header      => $qy_old[6],
                                 query       => ". IN A",
                                 ruleset     => [
                                     {
-                                        fingerprint => $iq[38],
+                                        fingerprint => $iq_old[38],
                                         result      => {
                                             vendor  => "Digital Lumber",
                                             product => "Oak DNS",
@@ -214,7 +577,7 @@ my @ruleset = (
                                 ]
                             },
                             {
-                                fingerprint => $iq[35],
+                                fingerprint => $iq_old[35],
                                 result      => {
                                     vendor  => "XBILL",
                                     product => "jnamed (dnsjava)",
@@ -222,7 +585,7 @@ my @ruleset = (
                                 },
                             },
                             {
-                                fingerprint => $iq[36],
+                                fingerprint => $iq_old[36],
                                 result      => {
                                     vendor  => "Men & Mice",
                                     product => "QuickDNS for MacOS Classic",
@@ -230,7 +593,7 @@ my @ruleset = (
                                 },
                             },
                             {
-                                fingerprint => $iq[37],
+                                fingerprint => $iq_old[37],
                                 result      => {
                                     vendor  => "unknown",
                                     product => "NonSequitur DNS",
@@ -241,7 +604,7 @@ my @ruleset = (
                         ]
                     },
                     {
-                        fingerprint => $iq[35],
+                        fingerprint => $iq_old[35],
                         result      => {
                             vendor  => "eNom",
                             product => "eNom DNS",
@@ -253,12 +616,12 @@ my @ruleset = (
             },
 
             {
-                fingerprint => $iq[0],
-                header      => $qy[1],
+                fingerprint => $iq_old[0],
+                header      => $qy_old[1],
                 query       => "jjjjjjjjjjjj IN A",
                 ruleset     => [
                     {
-                        fingerprint => $iq[12],
+                        fingerprint => $iq_old[12],
                         result      => {
                             vendor  => "ISC",
                             product => "BIND",
@@ -267,7 +630,7 @@ my @ruleset = (
                         qv => "version.bind",
                     },
                     {
-                        fingerprint => $iq[13],
+                        fingerprint => $iq_old[13],
                         result      => {
                             vendor  => "ISC",
                             product => "BIND",
@@ -276,7 +639,7 @@ my @ruleset = (
                         qv => "version.bind",
                     },
                     {
-                        fingerprint => $iq[15],
+                        fingerprint => $iq_old[15],
                         result      => {
                             vendor  => "Cisco",
                             product => "CNR",
@@ -284,12 +647,12 @@ my @ruleset = (
                         },
                     },
                     {
-                        fingerprint => $iq[16],
-                        header      => $qy[2],
+                        fingerprint => $iq_old[16],
+                        header      => $qy_old[2],
                         query       => "hostname.bind CH TXT",
                         ruleset     => [
                             {
-                                fingerprint => $iq[58],
+                                fingerprint => $iq_old[58],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -298,7 +661,7 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[50],
+                                fingerprint => $iq_old[50],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -307,7 +670,7 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[48],
+                                fingerprint => $iq_old[48],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -323,12 +686,12 @@ my @ruleset = (
             },
 
             {
-                fingerprint => $iq[1],
-                header      => $qy[2],
+                fingerprint => $iq_old[1],
+                header      => $qy_old[2],
                 query       => ". IN IXFR",
                 ruleset     => [
                     {
-                        fingerprint => $iq[31],
+                        fingerprint => $iq_old[31],
                         result      => {
                             vendor  => "Microsoft",
                             product => "Windows DNS",
@@ -336,7 +699,7 @@ my @ruleset = (
                         },
                     },
                     {
-                        fingerprint => $iq[32],
+                        fingerprint => $iq_old[32],
                         result      => {
                             vendor  => "Microsoft",
                             product => "Windows DNS",
@@ -344,7 +707,7 @@ my @ruleset = (
                         },
                     },
                     {
-                        fingerprint => $iq[50],
+                        fingerprint => $iq_old[50],
                         result      => {
                             vendor  => "Microsoft",
                             product => "Windows DNS",
@@ -356,11 +719,11 @@ my @ruleset = (
             },
 
             {
-                fingerprint => $iq[2],
-                header      => $qy[1],
+                fingerprint => $iq_old[2],
+                header      => $qy_old[1],
                 ruleset     => [
                     {
-                        fingerprint => $iq[11],
+                        fingerprint => $iq_old[11],
                         result      => {
                             vendor  => "ISC",
                             product => "BIND",
@@ -369,15 +732,15 @@ my @ruleset = (
                         qv => "version.bind",
                     },
                     {
-                        fingerprint => $iq[12],
-                        header      => $qy[3],
+                        fingerprint => $iq_old[12],
+                        header      => $qy_old[3],
                         ruleset     => [
                             {
-                                fingerprint => $iq[25],
-                                header      => $qy[6],
+                                fingerprint => $iq_old[25],
+                                header      => $qy_old[6],
                                 ruleset     => [
                                     {
-                                        fingerprint => $iq[33],
+                                        fingerprint => $iq_old[33],
                                         result      => {
                                             vendor  => "bboy",
                                             product => "MyDNS",
@@ -385,13 +748,13 @@ my @ruleset = (
                                         },
                                     },
                                     {
-                                        fingerprint => $iq[34],
-                                        header      => $qy[2],
+                                        fingerprint => $iq_old[34],
+                                        header      => $qy_old[2],
                                         query =>
 "012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012345678901234567890123456789012345678901234567890. IN A",
                                         ruleset => [
                                             {
-                                                fingerprint => $iq[47],
+                                                fingerprint => $iq_old[47],
                                                 result      => {
                                                     vendor  => "NLnetLabs",
                                                     product => "NSD",
@@ -400,13 +763,14 @@ my @ruleset = (
                                                 qv => "version.server",
                                             },
                                             {
-                                                fingerprint => $iq[48],
-                                                header      => $qy[2],
+                                                fingerprint => $iq_old[48],
+                                                header      => $qy_old[2],
                                                 query => "hostname.bind CH TXT",
                                                 ruleset => [
                                                     {
-                                                        fingerprint => $iq[50],
-                                                        result      => {
+                                                        fingerprint =>
+                                                          $iq_old[50],
+                                                        result => {
                                                             vendor =>
                                                               "NLnetLabs",
                                                             product => "NSD",
@@ -415,13 +779,14 @@ my @ruleset = (
                                                         qv => "version.server",
                                                     },
                                                     {
-                                                        fingerprint => $iq[51],
-                                                        header      => $qy[8],
-                                                        query       => ". IN A",
-                                                        ruleset     => [
+                                                        fingerprint =>
+                                                          $iq_old[51],
+                                                        header  => $qy_old[8],
+                                                        query   => ". IN A",
+                                                        ruleset => [
                                                             {
                                                                 fingerprint =>
-                                                                  $iq[93],
+                                                                  $iq_old[93],
                                                                 result => {
                                                                     vendor =>
 "NLnetLabs",
@@ -435,7 +800,7 @@ my @ruleset = (
                                                             },
                                                             {
                                                                 fingerprint =>
-                                                                  $iq[48],
+                                                                  $iq_old[48],
                                                                 result => {
                                                                     vendor =>
 "NLnetLabs",
@@ -463,13 +828,14 @@ my @ruleset = (
                                                 ]
                                             },
                                             {
-                                                fingerprint => $iq[49],
-                                                header      => $qy[2],
+                                                fingerprint => $iq_old[49],
+                                                header      => $qy_old[2],
                                                 query => "hostname.bind CH TXT",
                                                 ruleset => [
                                                     {
-                                                        fingerprint => $iq[50],
-                                                        result      => {
+                                                        fingerprint =>
+                                                          $iq_old[50],
+                                                        result => {
                                                             vendor =>
                                                               "NLnetLabs",
                                                             product => "NSD",
@@ -479,8 +845,9 @@ my @ruleset = (
                                                         qv => "version.server",
                                                     },
                                                     {
-                                                        fingerprint => $iq[51],
-                                                        result      => {
+                                                        fingerprint =>
+                                                          $iq_old[51],
+                                                        result => {
                                                             vendor =>
                                                               "NLnetLabs",
                                                             product => "NSD",
@@ -497,7 +864,7 @@ my @ruleset = (
                                                 ]
                                             },
                                             {
-                                                fingerprint => $iq[53],
+                                                fingerprint => $iq_old[53],
                                                 result      => {
                                                     vendor  => "NLnetLabs",
                                                     product => "NSD",
@@ -519,7 +886,7 @@ my @ruleset = (
                                 ]
                             },
                             {
-                                fingerprint => $iq[26],
+                                fingerprint => $iq_old[26],
                                 result      => {
                                     vendor  => "VeriSign",
                                     product => "ATLAS",
@@ -530,11 +897,11 @@ my @ruleset = (
                         ]
                     },
                     {
-                        fingerprint => $iq[15],
-                        header      => $qy[6],
+                        fingerprint => $iq_old[15],
+                        header      => $qy_old[6],
                         ruleset     => [
                             {
-                                fingerprint => $iq[45],
+                                fingerprint => $iq_old[45],
                                 result      => {
                                     vendor  => "Nominum",
                                     product => "ANS",
@@ -543,7 +910,7 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[65],
+                                fingerprint => $iq_old[65],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -552,11 +919,11 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[46],
-                                header      => $qy[7],
+                                fingerprint => $iq_old[46],
+                                header      => $qy_old[7],
                                 ruleset     => [
                                     {
-                                        fingerprint => $iq[56],
+                                        fingerprint => $iq_old[56],
                                         result      => {
                                             vendor  => "ISC",
                                             product => "BIND",
@@ -565,7 +932,7 @@ my @ruleset = (
                                         qv => "version.bind",
                                     },
                                     {
-                                        fingerprint => $iq[57],
+                                        fingerprint => $iq_old[57],
                                         result      => {
                                             vendor  => "ISC",
                                             product => "BIND",
@@ -583,11 +950,11 @@ my @ruleset = (
                         ]
                     },
                     {
-                        fingerprint => $iq[16],
-                        header      => $qy[4],
+                        fingerprint => $iq_old[16],
+                        header      => $qy_old[4],
                         ruleset     => [
                             {
-                                fingerprint => $iq[29],
+                                fingerprint => $iq_old[29],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -596,12 +963,12 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[30],
-                                header      => $qy[0],
+                                fingerprint => $iq_old[30],
+                                header      => $qy_old[0],
                                 query       => ". A CLASS0",
                                 ruleset     => [
                                     {
-                                        fingerprint => $iq[2],
+                                        fingerprint => $iq_old[2],
                                         result      => {
                                             vendor  => "ISC",
                                             product => "BIND",
@@ -610,7 +977,7 @@ my @ruleset = (
                                         qv => "version.bind",
                                     },
                                     {
-                                        fingerprint => $iq[0],
+                                        fingerprint => $iq_old[0],
                                         result      => {
                                             vendor  => "ISC",
                                             product => "BIND",
@@ -637,15 +1004,15 @@ my @ruleset = (
             },
 
             {
-                fingerprint => $iq[3],
-                header      => $qy[1],
+                fingerprint => $iq_old[3],
+                header      => $qy_old[1],
                 ruleset     => [
                     {
                         fingerprint => "query timed out",
-                        header      => $qy[5],
+                        header      => $qy_old[5],
                         ruleset     => [
                             {
-                                fingerprint => $iq[3],
+                                fingerprint => $iq_old[3],
                                 result      => {
                                     vendor  => "sourceforge",
                                     product => "Dents",
@@ -654,7 +1021,7 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[81],
+                                fingerprint => $iq_old[81],
                                 result      => {
                                     vendor  => "Microsoft",
                                     product => "Windows DNS",
@@ -662,7 +1029,7 @@ my @ruleset = (
                                 },
                             },
                             {
-                                fingerprint => $iq[91],
+                                fingerprint => $iq_old[91],
                                 result      => {
                                     vendor  => "Microsoft",
                                     product => "Windows DNS",
@@ -674,7 +1041,7 @@ my @ruleset = (
 
                     },
                     {
-                        fingerprint => $iq[14],
+                        fingerprint => $iq_old[14],
                         result      => {
                             vendor  => "UltraDNS",
                             product => "",
@@ -683,11 +1050,11 @@ my @ruleset = (
                         qv => "version.bind",
                     },
                     {
-                        fingerprint => $iq[13],
-                        header      => $qy[5],
+                        fingerprint => $iq_old[13],
+                        header      => $qy_old[5],
                         ruleset     => [
                             {
-                                fingerprint => $iq[39],
+                                fingerprint => $iq_old[39],
                                 result      => {
                                     vendor  => "pliant",
                                     product => "DNS Server",
@@ -695,7 +1062,7 @@ my @ruleset = (
                                 },
                             },
                             {
-                                fingerprint => $iq[7],
+                                fingerprint => $iq_old[7],
                                 result      => {
                                     vendor  => "JHSOFT",
                                     product => "simple DNS plus",
@@ -703,11 +1070,11 @@ my @ruleset = (
                                 },
                             },
                             {
-                                fingerprint => $iq[71],
-                                header      => $qy[6],
+                                fingerprint => $iq_old[71],
+                                header      => $qy_old[6],
                                 ruleset     => [
                                     {
-                                        fingerprint => $iq[41],
+                                        fingerprint => $iq_old[41],
                                         result      => {
                                             vendor  => "Netnumber",
                                             product => "ENUM server",
@@ -715,7 +1082,7 @@ my @ruleset = (
                                         },
                                     },
                                     {
-                                        fingerprint => $iq[85],
+                                        fingerprint => $iq_old[85],
                                         result      => {
                                             vendor  => "Raiden",
                                             product => "DNSD",
@@ -732,12 +1099,12 @@ my @ruleset = (
             },
 
             {
-                fingerprint => $iq[4],
-                header      => $qy[1],
+                fingerprint => $iq_old[4],
+                header      => $qy_old[1],
                 query       => "jjjjjjjjjjjj IN A",
                 ruleset     => [
                     {
-                        fingerprint => $iq[17],
+                        fingerprint => $iq_old[17],
                         result      => {
                             vendor  => "ISC",
                             product => "BIND",
@@ -746,12 +1113,12 @@ my @ruleset = (
                         qv => "version.bind",
                     },
                     {
-                        fingerprint => $iq[18],
-                        header      => $qy[5],
+                        fingerprint => $iq_old[18],
+                        header      => $qy_old[5],
                         query       => ". IN A",
                         ruleset     => [
                             {
-                                fingerprint => $iq[27],
+                                fingerprint => $iq_old[27],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -760,7 +1127,7 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[28],
+                                fingerprint => $iq_old[28],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -771,7 +1138,7 @@ my @ruleset = (
                         ]
                     },
                     {
-                        fingerprint => $iq[19],
+                        fingerprint => $iq_old[19],
                         result      => {
                             vendor  => "ISC",
                             product => "BIND",
@@ -780,12 +1147,12 @@ my @ruleset = (
                         qv => "version.bind",
                     },
                     {
-                        fingerprint => $iq[20],
-                        header      => $qy[3],
+                        fingerprint => $iq_old[20],
+                        header      => $qy_old[3],
                         query       => ". IN A",
                         ruleset     => [
                             {
-                                fingerprint => $iq[42],
+                                fingerprint => $iq_old[42],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -798,12 +1165,12 @@ my @ruleset = (
                         ]
                     },
                     {
-                        fingerprint => $iq[21],
-                        header      => $qy[2],
+                        fingerprint => $iq_old[21],
+                        header      => $qy_old[2],
                         query       => "hostname.bind CH TXT",
                         ruleset     => [
                             {
-                                fingerprint => $iq[60],
+                                fingerprint => $iq_old[60],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -813,12 +1180,12 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[59],
-                                header      => $qy[7],
+                                fingerprint => $iq_old[59],
+                                header      => $qy_old[7],
                                 query       => ". IN A",
                                 ruleset     => [
                                     {
-                                        fingerprint => $iq[68],
+                                        fingerprint => $iq_old[68],
                                         result      => {
                                             vendor  => "ISC",
                                             product => "BIND",
@@ -828,7 +1195,7 @@ my @ruleset = (
                                         qv => "version.bind",
                                     },
                                     {
-                                        fingerprint => $iq[69],
+                                        fingerprint => $iq_old[69],
                                         result      => {
                                             vendor  => "ISC",
                                             product => "BIND",
@@ -853,7 +1220,7 @@ my @ruleset = (
                             },
 
                             {
-                                fingerprint => $iq[58],
+                                fingerprint => $iq_old[58],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -863,7 +1230,7 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[50],
+                                fingerprint => $iq_old[50],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -873,7 +1240,7 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[61],
+                                fingerprint => $iq_old[61],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -883,7 +1250,7 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[48],
+                                fingerprint => $iq_old[48],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -900,11 +1267,11 @@ my @ruleset = (
             },
 
             {
-                fingerprint => $iq[5],
-                header      => $qy[1],
+                fingerprint => $iq_old[5],
+                header      => $qy_old[1],
                 ruleset     => [
                     {
-                        fingerprint => $iq[11],
+                        fingerprint => $iq_old[11],
                         result      => {
                             vendor  => "ISC",
                             product => "BIND",
@@ -914,7 +1281,7 @@ my @ruleset = (
                         qv => "version.bind",
                     },
                     {
-                        fingerprint => $iq[17],
+                        fingerprint => $iq_old[17],
                         result      => {
                             vendor  => "ISC",
                             product => "BIND",
@@ -923,16 +1290,16 @@ my @ruleset = (
                         qv => "version.bind",
                     },
                     {
-                        fingerprint => $iq[18],
-                        header      => $qy[5],
+                        fingerprint => $iq_old[18],
+                        header      => $qy_old[5],
                         ruleset     => [
                             {
-                                fingerprint => $iq[5],
-                                header      => $qy[7],
+                                fingerprint => $iq_old[5],
+                                header      => $qy_old[7],
                                 query       => ". IN A",
                                 ruleset     => [
                                     {
-                                        fingerprint => $iq[84],
+                                        fingerprint => $iq_old[84],
                                         result      => {
                                             vendor  => "Nominum",
                                             product => "CNS",
@@ -941,7 +1308,7 @@ my @ruleset = (
                                         qv => "version.bind",
                                     },
                                     {
-                                        fingerprint => $iq[59],
+                                        fingerprint => $iq_old[59],
                                         result      => {
                                             vendor  => "Mikrotik",
                                             product => "dsl/cable",
@@ -949,7 +1316,7 @@ my @ruleset = (
                                         },
                                     },
                                     {
-                                        fingerprint => $iq[82],
+                                        fingerprint => $iq_old[82],
                                         result      => {
                                             vendor  => "Mikrotik",
                                             product => "dsl/cable",
@@ -963,18 +1330,18 @@ my @ruleset = (
                                 ]
                             },
                             {
-                                fingerprint => $iq[64],
+                                fingerprint => $iq_old[64],
                                 result => "unknown, smells like old BIND 4",
                             },
                             { fingerprint => ".+", state => "q0r5q1r18q5r?", },
                         ]
                     },
                     {
-                        fingerprint => $iq[20],
-                        header      => $qy[7],
+                        fingerprint => $iq_old[20],
+                        header      => $qy_old[7],
                         ruleset     => [
                             {
-                                fingerprint => $iq[54],
+                                fingerprint => $iq_old[54],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -984,7 +1351,7 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[55],
+                                fingerprint => $iq_old[55],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -994,7 +1361,7 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[63],
+                                fingerprint => $iq_old[63],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -1004,7 +1371,7 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[61],
+                                fingerprint => $iq_old[61],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -1017,8 +1384,8 @@ my @ruleset = (
                         ]
                     },
                     {
-                        fingerprint => $iq[21],
-                        header      => $qy[4],
+                        fingerprint => $iq_old[21],
+                        header      => $qy_old[4],
                         ruleset     => [
                             {
                                 fingerprint => "query timed out",
@@ -1031,7 +1398,7 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[29],
+                                fingerprint => $iq_old[29],
                                 result      => {
                                     vendor  => "ISC",
                                     product => "BIND",
@@ -1041,12 +1408,12 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[61],
-                                header      => $qy[0],
+                                fingerprint => $iq_old[61],
+                                header      => $qy_old[0],
                                 query       => ". A CLASS0",
                                 ruleset     => [
                                     {
-                                        fingerprint => $iq[2],
+                                        fingerprint => $iq_old[2],
                                         result      => {
                                             vendor  => "ISC",
                                             product => "BIND",
@@ -1056,7 +1423,7 @@ my @ruleset = (
                                         qv => "version.bind",
                                     },
                                     {
-                                        fingerprint => $iq[0],
+                                        fingerprint => $iq_old[0],
                                         result      => {
                                             vendor  => "ISC",
                                             product => "BIND",
@@ -1078,12 +1445,12 @@ my @ruleset = (
                                 ]
                             },
                             {
-                                fingerprint => $iq[30],
-                                header      => $qy[0],
+                                fingerprint => $iq_old[30],
+                                header      => $qy_old[0],
                                 query       => ". A CLASS0",
                                 ruleset     => [
                                     {
-                                        fingerprint => $iq[2],
+                                        fingerprint => $iq_old[2],
                                         result      => {
                                             vendor  => "ISC",
                                             product => "BIND",
@@ -1093,7 +1460,7 @@ my @ruleset = (
                                         qv => "version.bind",
                                     },
                                     {
-                                        fingerprint => $iq[0],
+                                        fingerprint => $iq_old[0],
                                         result      => {
                                             vendor  => "ISC",
                                             product => "BIND",
@@ -1122,11 +1489,11 @@ my @ruleset = (
             },
 
             {
-                fingerprint => $iq[6],
-                header      => $qy[1],
+                fingerprint => $iq_old[6],
+                header      => $qy_old[1],
                 ruleset     => [
                     {
-                        fingerprint => $iq[15],
+                        fingerprint => $iq_old[15],
                         result      => {
                             vendor  => "incognito",
                             product => "DNS commander",
@@ -1135,11 +1502,11 @@ my @ruleset = (
                         qv => "version.bind",
                     },
                     {
-                        fingerprint => $iq[19],
-                        header      => $qy[3],
+                        fingerprint => $iq_old[19],
+                        header      => $qy_old[3],
                         ruleset     => [
                             {
-                                fingerprint => $iq[66],
+                                fingerprint => $iq_old[66],
                                 result      => {
                                     vendor  => "vermicelli",
                                     product => "totd",
@@ -1147,7 +1514,7 @@ my @ruleset = (
                                 },
                             },
                             {
-                                fingerprint => $iq[67],
+                                fingerprint => $iq_old[67],
                                 result      => {
                                     vendor  => "JHSOFT",
                                     product => "simple DNS plus",
@@ -1162,15 +1529,15 @@ my @ruleset = (
             },
 
             {
-                fingerprint => $iq[7],
-                header      => $qy[1],
+                fingerprint => $iq_old[7],
+                header      => $qy_old[1],
                 ruleset     => [
                     {
-                        fingerprint => $iq[22],
-                        header      => $qy[3],
+                        fingerprint => $iq_old[22],
+                        header      => $qy_old[3],
                         ruleset     => [
                             {
-                                fingerprint => $iq[97],
+                                fingerprint => $iq_old[97],
                                 result      => {
                                     vendor  => "PowerDNS",
                                     product => "PowerDNS",
@@ -1179,7 +1546,7 @@ my @ruleset = (
                                 qv => "version.bind",
                             },
                             {
-                                fingerprint => $iq[98],
+                                fingerprint => $iq_old[98],
                                 result      => {
                                     vendor  => "Stanford",
                                     product => "lbnamed",
@@ -1190,7 +1557,7 @@ my @ruleset = (
                         ]
                     },
                     {
-                        fingerprint => $iq[24],
+                        fingerprint => $iq_old[24],
                         result      => {
                             vendor  => "PowerDNS",
                             product => "PowerDNS",
@@ -1203,12 +1570,12 @@ my @ruleset = (
             },
 
             {
-                fingerprint => $iq[8],
-                header      => $qy[1],
+                fingerprint => $iq_old[8],
+                header      => $qy_old[1],
                 ruleset     => [
                     {
-                        fingerprint => $iq[23],
-                        header      => $qy[2],
+                        fingerprint => $iq_old[23],
+                        header      => $qy_old[2],
                         query       => ". CH A",
                         ruleset     => [
                             {
@@ -1220,7 +1587,7 @@ my @ruleset = (
                                 },
                             },
                             {
-                                fingerprint => $iq[32],
+                                fingerprint => $iq_old[32],
                                 result      => {
                                     vendor  => "DJ Bernstein",
                                     product => "TinyDNS",
@@ -1235,11 +1602,11 @@ my @ruleset = (
             },
 
             {
-                fingerprint => $iq[9],
-                header      => $qy[1],
+                fingerprint => $iq_old[9],
+                header      => $qy_old[1],
                 ruleset     => [
                     {
-                        fingerprint => $iq[9],
+                        fingerprint => $iq_old[9],
                         result      => {
                             vendor  => "Sam Trenholme",
                             product => "MaraDNS",
@@ -1252,12 +1619,15 @@ my @ruleset = (
             },
 
             {
-                fingerprint => $iq[10],
-                result =>
-                  { vendor => "Microsoft", product => "?", version => "" },
+                fingerprint => $iq_old[10],
+                result      => {
+                    vendor  => "Microsoft",
+                    product => "?",
+                    version => ""
+                },
             },
             {
-                fingerprint => $iq[26],
+                fingerprint => $iq_old[26],
                 result      => {
                     vendor  => "Meilof Veeningen",
                     product => "Posadis",
@@ -1265,11 +1635,11 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[43],
-                header      => $qy[6],
+                fingerprint => $iq_old[43],
+                header      => $qy_old[6],
                 ruleset     => [
                     {
-                        fingerprint => $iq[34],
+                        fingerprint => $iq_old[34],
                         result      => {
                             vendor  => "Paul Rombouts",
                             product => "pdnsd",
@@ -1277,7 +1647,7 @@ my @ruleset = (
                         },
                     },
                     {
-                        fingerprint => $iq[75],
+                        fingerprint => $iq_old[75],
                         result      => {
                             vendor  => "antirez",
                             product => "Yaku-NS",
@@ -1289,7 +1659,7 @@ my @ruleset = (
             },
 
             {
-                fingerprint => $iq[44],
+                fingerprint => $iq_old[44],
                 result      => {
                     vendor  => "cpan",
                     product => "Net::DNS Nameserver",
@@ -1298,7 +1668,7 @@ my @ruleset = (
                 qv => "version.bind",
             },
             {
-                fingerprint => $iq[52],
+                fingerprint => $iq_old[52],
                 result      => {
                     vendor  => "NLnetLabs",
                     product => "NSD",
@@ -1306,11 +1676,11 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[55],
-                header      => $qy[3],
+                fingerprint => $iq_old[55],
+                header      => $qy_old[3],
                 ruleset     => [
                     {
-                        fingerprint => $iq[94],
+                        fingerprint => $iq_old[94],
                         result      => {
                             vendor  => "robtex",
                             product => "Viking DNS module",
@@ -1318,7 +1688,7 @@ my @ruleset = (
                         },
                     },
                     {
-                        fingerprint => $iq[95],
+                        fingerprint => $iq_old[95],
                         result      => {
                             vendor  => "cisco",
                             product => "dns resolver/server",
@@ -1329,7 +1699,7 @@ my @ruleset = (
                 ]
             },
             {
-                fingerprint => $iq[59],
+                fingerprint => $iq_old[59],
                 result      => {
                     vendor  => "Max Feoktistov",
                     product => "small HTTP server [recursion enabled]",
@@ -1337,7 +1707,7 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[60],
+                fingerprint => $iq_old[60],
                 result      => {
                     vendor  => "Axis",
                     product => "video server",
@@ -1345,12 +1715,12 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[62],
-                header      => $qy[7],
+                fingerprint => $iq_old[62],
+                header      => $qy_old[7],
                 query       => "1.0.0.127.in-addr.arpa. IN PTR",
                 ruleset     => [
                     {
-                        fingerprint => $iq[62],
+                        fingerprint => $iq_old[62],
                         result      => {
                             vendor  => "Michael Tokarev",
                             product => "rbldnsd",
@@ -1359,7 +1729,7 @@ my @ruleset = (
                         qv => "version.bind",
                     },
                     {
-                        fingerprint => $iq[79],
+                        fingerprint => $iq_old[79],
                         result      => {
                             vendor  => "4D",
                             product => "WebSTAR",
@@ -1367,7 +1737,7 @@ my @ruleset = (
                         },
                     },
                     {
-                        fingerprint => $iq[83],
+                        fingerprint => $iq_old[83],
                         result      => {
                             vendor  => "Netopia",
                             product => "dsl/cable",
@@ -1375,7 +1745,7 @@ my @ruleset = (
                         },
                     },
                     {
-                        fingerprint => $iq[90],
+                        fingerprint => $iq_old[90],
                         result      => {
                             vendor  => "TZO",
                             product => "Tzolkin DNS",
@@ -1394,7 +1764,7 @@ my @ruleset = (
                 ]
             },
             {
-                fingerprint => $iq[70],
+                fingerprint => $iq_old[70],
                 result      => {
                     vendor  => "Yutaka Sato",
                     product => "DeleGate DNS",
@@ -1402,12 +1772,15 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[72],
-                result =>
-                  { vendor => "", product => "sheerdns", version => "" },
+                fingerprint => $iq_old[72],
+                result      => {
+                    vendor  => "",
+                    product => "sheerdns",
+                    version => ""
+                },
             },
             {
-                fingerprint => $iq[73],
+                fingerprint => $iq_old[73],
                 result      => {
                     vendor  => "Matthew Pratt",
                     product => "dproxy",
@@ -1415,12 +1788,15 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[74],
-                result =>
-                  { vendor => "Brad Garcia", product => "dnrd", version => "" },
+                fingerprint => $iq_old[74],
+                result      => {
+                    vendor  => "Brad Garcia",
+                    product => "dnrd",
+                    version => ""
+                },
             },
             {
-                fingerprint => $iq[76],
+                fingerprint => $iq_old[76],
                 result      => {
                     vendor  => "Sourceforge",
                     product => "JDNSS",
@@ -1428,7 +1804,7 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[77],
+                fingerprint => $iq_old[77],
                 result      => {
                     vendor  => "Dan Kaminsky",
                     product => "nomde DNS tunnel",
@@ -1436,7 +1812,7 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[78],
+                fingerprint => $iq_old[78],
                 result      => {
                     vendor  => "Max Feoktistov",
                     product => "small HTTP server",
@@ -1444,7 +1820,7 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[79],
+                fingerprint => $iq_old[79],
                 result      => {
                     vendor  => "robtex",
                     product => "Viking DNS module",
@@ -1452,7 +1828,7 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[80],
+                fingerprint => $iq_old[80],
                 result      => {
                     vendor  => "Fasthosts",
                     product => "Envisage DNS server",
@@ -1460,7 +1836,7 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[81],
+                fingerprint => $iq_old[81],
                 result      => {
                     vendor  => "WinGate",
                     product => "Wingate DNS",
@@ -1468,7 +1844,7 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[82],
+                fingerprint => $iq_old[82],
                 result      => {
                     vendor  => "Ascenvision",
                     product => "SwiftDNS",
@@ -1476,7 +1852,7 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[86],
+                fingerprint => $iq_old[86],
                 result      => {
                     vendor  => "Nortel Networks",
                     product => "Instant Internet",
@@ -1484,7 +1860,7 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[87],
+                fingerprint => $iq_old[87],
                 result      => {
                     vendor  => "ATOS",
                     product => "Stargate ADSL",
@@ -1492,7 +1868,7 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[88],
+                fingerprint => $iq_old[88],
                 result      => {
                     vendor  => "3Com",
                     product => "Office Connect Remote",
@@ -1500,12 +1876,15 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[89],
-                result =>
-                  { vendor => "Alteon", product => "ACEswitch", version => "" },
+                fingerprint => $iq_old[89],
+                result      => {
+                    vendor  => "Alteon",
+                    product => "ACEswitch",
+                    version => ""
+                },
             },
             {
-                fingerprint => $iq[90],
+                fingerprint => $iq_old[90],
                 result      => {
                     vendor  => "javaprofessionals",
                     product => "javadns/jdns",
@@ -1513,18 +1892,24 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[92],
-                result =>
-                  { vendor => "Beehive", product => "CoDoNS", version => "" },
+                fingerprint => $iq_old[92],
+                result      => {
+                    vendor  => "Beehive",
+                    product => "CoDoNS",
+                    version => ""
+                },
             },
             {
-                fingerprint => $iq[96],
-                result =>
-                  { vendor => "Beevihe", product => "AAAAAA", version => "" },
+                fingerprint => $iq_old[96],
+                result      => {
+                    vendor  => "Beevihe",
+                    product => "AAAAAA",
+                    version => ""
+                },
                 qv => "version.bind",
             },
             {
-                fingerprint => $iq[100],
+                fingerprint => $iq_old[100],
                 result      => {
                     vendor  => "ValidStream",
                     product => "ValidDNS",
@@ -1532,7 +1917,7 @@ my @ruleset = (
                 },
             },
             {
-                fingerprint => $iq[101],
+                fingerprint => $iq_old[101],
                 result      => {
                     vendor  => "ValidStream",
                     product => "ValidDNS",
@@ -1555,7 +1940,7 @@ sub new {
 
     my %config = @_;
 
-    for my $k (keys %default) {
+    foreach my $k (keys %default) {
         if (defined $config{$k}) {
             $self->{$k} = $config{$k};
         } else {
@@ -1603,9 +1988,9 @@ sub string {
 
     push @s, $r{vstring} if (defined $r{vstring});
 
-    push @s, "($r{state};$r{id})" if ($self->{debug});
+    push @s, $r{state} if (defined $r{state} && $self->{debug});
 
-    return join($self->{separator}, @s);
+    return join(" ", @s);
 }
 
 sub query_version {
@@ -1627,7 +2012,7 @@ sub query_version {
     my $query = $resolver->query($ident, 'TXT', 'CH');
 
     if ($query && $query->header->ancount > 0) {
-        for my $rr ($query->answer) {
+        foreach my $rr ($query->answer) {
             ($rrset = $rrset . "\"" . $rr->txtdata . "\" ")
               if ($rr->type eq "TXT");
         }
@@ -1647,8 +2032,19 @@ sub init {
     my $qserver = shift;
     my $qport   = shift;
 
-    return $self->process($qserver, $qport, $initrule{header}, $initrule{query},
+    my %match =
+      $self->process($qserver, $qport, $initrule{header}, $initrule{query},
         \@ruleset);
+
+    if (defined $match{product}) {
+        return %match;
+    } else {
+
+   #For backwards compatibility with old fingerprint code which never set the rd
+        $ignore_recurse = 1;
+        return $self->process($qserver, $qport, $old_initrule{header},
+            $old_initrule{query}, \@old_ruleset);
+    }
 }
 
 sub process {
@@ -1704,6 +2100,7 @@ sub process {
                 $ret{product} = $rule->{result}{product};
                 $ret{version} = $rule->{result}{version};
                 $ret{option}  = $rule->{result}{option};
+                $ret{state}   = $rule->{result}{state};
             } else {
                 $ret{result} = $rule->{result};
             }
@@ -1801,6 +2198,9 @@ sub probe {
 
     my $resolver = Net::DNS::Resolver->new;
     $resolver->nameservers($qserver);
+    if (!$ignore_recurse) {
+        $resolver->recurse($header->rd);
+    }
     $resolver->port($qport);
     $resolver->srcaddr($self->{source});
     $resolver->retry($self->{retry});

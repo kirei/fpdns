@@ -1,0 +1,28 @@
+To compile:
+- Download and install GCC if you don't already have it [http://gcc.gnu.org/]
+- Download and install libvdns from http://www.vantage-points.org/download.html.
+- Follow the instructions on http://www.vantage-points.org/libvdns.html
+- Run ./compile to compile response collector
+
+To run:
+./response_collector "$DNS_SERVER_NAME" $SERVER_IP_ADDRESS
+
+or
+
+./response_collector "$VENDOR | $PRODUCT | $VERSION" $SERVER_IP_ADDRESS
+
+or
+
+./response_collector --show-queries
+
+To create  output for use with Fingerprint Generator:
+- Redirect collector output to files with .fpr as the extension into a directory
+- Run ./response_collector --show-queries and redirect the output to a text file
+
+e.g
+./response_collector "Google | DNS | " 8.8.8.8 > GoogleDNS.fpr
+./response_collector "ISC | BIND | 10" 192.168.2.5 > BIND10.fpr
+./response_collector "EagleDNS" 127.0.0.1 > EagleDNS.fpr
+...
+./response_collector --show-queries > queries_v0.1.txt
+

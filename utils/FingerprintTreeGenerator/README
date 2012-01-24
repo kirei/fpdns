@@ -1,6 +1,0 @@
-COMPILING
-javac -classpath commons-collections-3.2.1.jar  *.java
-
-RUNNING
-java -classpath commons-collections-3.2.1.jar:. Main /path/to/responses/directory
-

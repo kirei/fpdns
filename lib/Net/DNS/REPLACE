@@ -1,0 +1,52 @@
+After you generate a perl tree from the generator, go through it and replace the
+non-responses with the right error.
+
+-------------------------------------------------------------------------------
+
+"0,QUERY,0,0,1,0,0,0,NOERROR,1,0,0,0" => "header section incomplete" #Unbound
+
+"0.+" => "query timed out" #Windows Server(s)
+
+
+-------------------------------------------------------------------------------
+e.g
+
+If you have the responses
+
+"0,NS_NOTIFY_OP,0,1,1,0,1,1,NOTIMP,1,0,0,0",    #iq7
+"1,IQUERY,0,0,0,1,0,0,NOTIMP,1,0,0,0",    #iq8
+"0,IQUERY,0,0,0,1,1,1,NOERROR,1,0,0,0",    #iq9
+"1,QUERY,0,0,1,0,0,0,NOTIMP,1,0,0,0",    #iq10
+"0,QUERY,0,0,1,0,0,0,NOERROR,1,0,0,0",    #iq11
+
+
+part of the tree
+
+{ fingerprint => $iq[8], result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2003"}, },
+{ fingerprint=>$iq[9], header=>$qy[4], query=>$nct[4], ruleset => [
+{ fingerprint => $iq[10], result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2003 R2"}, },
+{ fingerprint=>$iq[11], header=>$qy[5], query=>$nct[5], ruleset => [
+{ fingerprint => $iq[11], result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2008 R2"}, },
+{ fingerprint => $iq[10], result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2008"}, },
+{ fingerprint => ".+", state=>"q0r3q1r3q2r7q3r9q4r11q5r?" },
+
+
+should become
+
+{ fingerprint => $iq[8], result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2003"}, },
+{ fingerprint=>"query timed out", header=>$qy[4], query=>$nct[4], ruleset => [
+{ fingerprint => $iq[10], result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2003 R2"}, },
+{ fingerprint=>"query timed out", header=>$qy[5], query=>$nct[5], ruleset => [
+{ fingerprint => "query timed out", result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2008 R2"}, },
+{ fingerprint => $iq[10], result => { vendor =>"Microsoft", product=>"Windows DNS", version=>"2008"}, },
+{ fingerprint => ".+", state=>"q0r3q1r3q2r7q3r9q4r11q5r?" },
+
+if you follow the replace instructions
+
+There is an unresolved bug where BIND 9.4.0 -- 9.5.1 identifies as BIND 9.6.0, this is
+temporarily fixed by replacing
+{ fingerprint => $iq[21], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.0"}, },
+
+with
+
+{ fingerprint => $iq[21], result => { vendor =>"ISC", product=>"BIND", version=>"9.6.0 OR 9.4.0 -- 9.5.1"}, },
