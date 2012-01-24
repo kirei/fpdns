@@ -40,13 +40,13 @@ use Net::DNS 0.42;
 our $VERSION = "0.10.0";
 
 my %default = (
-source   => undef,
-timeout  => 5,
-retry    => 1,
-forcetcp => 0,
-debug    => 0,
-qversion => 0,
-qchaos   => 0,
+    source    => undef,
+    timeout   => 5,
+    retry     => 1,
+    forcetcp  => 0,
+    debug     => 0,
+    qversion  => 0,
+    qchaos    => 0,
 );
 
 my $versionlength = 40;
@@ -54,64 +54,65 @@ my $versionlength = 40;
 my $ignore_recurse = 0;
 
 my @qy = (
-"0,QUERY,0,0,0,0,0,0,NOERROR,0,0,0,0",    #qy0
-"0,QUERY,0,0,0,1,0,1,NOERROR,0,0,0,0",    #qy1
-"0,NS_NOTIFY_OP,0,1,1,0,1,1,NOTIMP,0,0,0,0",    #qy2
-"0,IQUERY,0,0,0,1,1,1,NOERROR,0,0,0,0",    #qy3
-"0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy4
-"0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy5
-"0,IQUERY,0,1,1,0,0,0,NOTIMP,0,0,0,0",    #qy6
-"0,QUERY,0,0,0,0,0,1,NOTIMP,0,0,0,0",    #qy7
-"0,UPDATE,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy8
-"0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy9
-"0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy10
-"0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",    #qy11
+    "0,QUERY,0,0,0,0,0,0,NOERROR,0,0,0,0",		#qy0
+    "0,QUERY,0,0,0,1,0,1,NOERROR,0,0,0,0",		#qy1
+    "0,NS_NOTIFY_OP,0,1,1,0,1,1,NOTIMP,0,0,0,0",	#qy2
+    "0,IQUERY,0,0,0,1,1,1,NOERROR,0,0,0,0",		#qy3
+    "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",		#qy4
+    "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",		#qy5
+    "0,IQUERY,0,1,1,0,0,0,NOTIMP,0,0,0,0",		#qy6
+    "0,QUERY,0,0,0,0,0,1,NOTIMP,0,0,0,0",		#qy7
+    "0,UPDATE,0,0,1,0,0,0,NOERROR,0,0,0,0",		#qy8
+    "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",		#qy9
+    "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",		#qy10
+    "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",		#qy11
 );
 
 my @nct = (
-". IN A",    #nct0
-". IN A",    #nct1
-". IN A",    #nct2
-". IN A",    #nct3
-"jjjjjjjjjjjj. CH A",    #nct4
-"jjjjjjjjjjjj. CH RRSIG",    #nct5
-". IN A",    #nct6
-". IN A",    #nct7
-". IN A",    #nct8
-". IN DNSKEY",    #nct9
-"jjjjjjjjjjjj. ANY TKEY",    #nct10
-". IN IXFR",    #nct11
+    ". IN A",			#nct0
+    ". IN A",			#nct1
+    ". IN A",			#nct2
+    ". IN A",			#nct3
+    "jjjjjjjjjjjj. CH A",	#nct4
+    "jjjjjjjjjjjj. CH RRSIG",	#nct5
+    ". IN A",			#nct6
+    ". IN A",			#nct7
+    ". IN A",			#nct8
+    ". IN DNSKEY",		#nct9
+    "jjjjjjjjjjjj. ANY TKEY",	#nct10
+    ". IN IXFR",		#nct11
 );
 
 my %initrule = (header => $qy[0], query  => $nct[0], );
 my @iq = (
-"1,QUERY,0,0,0,0,0,0,SERVFAIL,1,0,0,0",    #iq0
-"1,QUERY,0,0,0,0,0,0,NXDOMAIN,1,0,0,0",    #iq1
-"1,QUERY,0,0,0,0,0,0,NOERROR,1,0,0,0",    #iq2
-"1,QUERY,0,0,0,1,0,0,NOERROR,.+,.+,.+,.+",    #iq3
-"1,NS_NOTIFY_OP,0,0,1,1,0,1,FORMERR,1,0,0,0",    #iq4
-"1,NS_NOTIFY_OP,0,0,1,1,0,0,FORMERR,1,0,0,0",    #iq5
-"1,NS_NOTIFY_OP,0,0,1,1,0,0,REFUSED,1,0,0,0",    #iq6
-"0,NS_NOTIFY_OP,0,1,1,0,1,1,NOTIMP,1,0,0,0",    #iq7
-"1,IQUERY,0,0,0,1,0,0,NOTIMP,1,0,0,0",    #iq8
-"0,IQUERY,0,0,0,1,1,1,NOERROR,1,0,0,0",    #iq9
-"1,QUERY,0,0,1,0,0,0,NOTIMP,1,0,0,0",    #iq10
-"0,QUERY,0,0,1,0,0,0,NOERROR,1,0,0,0",    #iq11
-"1,NS_NOTIFY_OP,0,0,1,1,0,0,SERVFAIL,1,0,0,0",    #iq12
-"1,IQUERY,0,0,1,1,0,0,SERVFAIL,1,0,0,0",    #iq13
-"1,IQUERY,0,0,1,1,0,0,NOTIMP,0,0,0,0",    #iq14
-"1,QUERY,0,0,0,1,0,0,NOTIMP,.+,.+,.+,.+",    #iq15
-"1,QUERY,0,0,0,1,0,1,NOERROR,.+,.+,.+,.+",    #iq16
-"1,UPDATE,0,0,1,1,0,0,FORMERR,1,0,0,0",    #iq17
-"1,QUERY,0,0,1,0,0,0,SERVFAIL,1,0,0,0",    #iq18
-"1,QUERY,0,0,1,0,0,0,REFUSED,1,0,0,0",    #iq19
-"1,UPDATE,0,0,1,1,0,0,FORMERR,0,0,0,0",    #iq20
-"1,QUERY,0,0,1,1,0,0,NOERROR,.+,.+,.+,.+",    #iq21
-"1,QUERY,0,1,1,1,0,0,NOERROR,.+,.+,.+,.+",    #iq22
-"1,QUERY,0,0,0,0,0,0,REFUSED,0,0,0,0",    #iq23
-"1,QUERY,0,0,1,1,0,0,REFUSED,1,0,0,0",    #iq24
-"1,QUERY,0,0,1,1,0,0,NXDOMAIN,.+,.+,.+,.+",    #iq25
+    "1,QUERY,0,0,0,0,0,0,SERVFAIL,1,0,0,0",		#iq0
+    "1,QUERY,0,0,0,0,0,0,NXDOMAIN,1,0,0,0",		#iq1
+    "1,QUERY,0,0,0,0,0,0,NOERROR,1,0,0,0",		#iq2
+    "1,QUERY,0,0,0,1,0,0,NOERROR,.+,.+,.+,.+",		#iq3
+    "1,NS_NOTIFY_OP,0,0,1,1,0,1,FORMERR,1,0,0,0",	#iq4
+    "1,NS_NOTIFY_OP,0,0,1,1,0,0,FORMERR,1,0,0,0",	#iq5
+    "1,NS_NOTIFY_OP,0,0,1,1,0,0,REFUSED,1,0,0,0",	#iq6
+    "0,NS_NOTIFY_OP,0,1,1,0,1,1,NOTIMP,1,0,0,0",	#iq7
+    "1,IQUERY,0,0,0,1,0,0,NOTIMP,1,0,0,0",		#iq8
+    "0,IQUERY,0,0,0,1,1,1,NOERROR,1,0,0,0",		#iq9
+    "1,QUERY,0,0,1,0,0,0,NOTIMP,1,0,0,0",		#iq10
+    "0,QUERY,0,0,1,0,0,0,NOERROR,1,0,0,0",		#iq11
+    "1,NS_NOTIFY_OP,0,0,1,1,0,0,SERVFAIL,1,0,0,0",	#iq12
+    "1,IQUERY,0,0,1,1,0,0,SERVFAIL,1,0,0,0",		#iq13
+    "1,IQUERY,0,0,1,1,0,0,NOTIMP,0,0,0,0",		#iq14
+    "1,QUERY,0,0,0,1,0,0,NOTIMP,.+,.+,.+,.+",		#iq15
+    "1,QUERY,0,0,0,1,0,1,NOERROR,.+,.+,.+,.+",		#iq16
+    "1,UPDATE,0,0,1,1,0,0,FORMERR,1,0,0,0",		#iq17
+    "1,QUERY,0,0,1,0,0,0,SERVFAIL,1,0,0,0",		#iq18
+    "1,QUERY,0,0,1,0,0,0,REFUSED,1,0,0,0",		#iq19
+    "1,UPDATE,0,0,1,1,0,0,FORMERR,0,0,0,0",		#iq20
+    "1,QUERY,0,0,1,1,0,0,NOERROR,.+,.+,.+,.+",		#iq21
+    "1,QUERY,0,1,1,1,0,0,NOERROR,.+,.+,.+,.+",		#iq22
+    "1,QUERY,0,0,0,0,0,0,REFUSED,0,0,0,0",		#iq23
+    "1,QUERY,0,0,1,1,0,0,REFUSED,1,0,0,0",		#iq24
+    "1,QUERY,0,0,1,1,0,0,NXDOMAIN,.+,.+,.+,.+",		#iq25
 );
+
 my @ruleset = (
 { fingerprint => $iq[0], result => { vendor =>"NLnetLabs", product=>"NSD", version=>"3.1.0 -- 3.2.8"}, },
 { fingerprint => $iq[1], result => { vendor =>"Unlogic", product=>"Eagle DNS", version=>"1.1.1"}, },
@@ -172,130 +173,133 @@ my @ruleset = (
 
 
 my @qy_old = (
-"0,IQUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",
-"0,NS_NOTIFY_OP,0,0,0,0,0,0,NOERROR,0,0,0,0",
-"0,QUERY,0,0,0,0,0,0,NOERROR,0,0,0,0",
-"0,IQUERY,0,0,0,0,1,1,NOERROR,0,0,0,0",
-"0,QUERY,0,0,0,0,0,0,NOTIMP,0,0,0,0",
-"0,IQUERY,1,0,1,1,1,1,NOERROR,0,0,0,0",
-"0,UPDATE,0,0,0,1,0,0,NOERROR,0,0,0,0",
-"0,QUERY,1,1,1,1,1,1,NOERROR,0,0,0,0",
-"0,QUERY,0,0,0,0,0,1,NOERROR,0,0,0,0",
+    "0,IQUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",
+    "0,NS_NOTIFY_OP,0,0,0,0,0,0,NOERROR,0,0,0,0",
+    "0,QUERY,0,0,0,0,0,0,NOERROR,0,0,0,0",
+    "0,IQUERY,0,0,0,0,1,1,NOERROR,0,0,0,0",
+    "0,QUERY,0,0,0,0,0,0,NOTIMP,0,0,0,0",
+    "0,IQUERY,1,0,1,1,1,1,NOERROR,0,0,0,0",
+    "0,UPDATE,0,0,0,1,0,0,NOERROR,0,0,0,0",
+    "0,QUERY,1,1,1,1,1,1,NOERROR,0,0,0,0",
+    "0,QUERY,0,0,0,0,0,1,NOERROR,0,0,0,0",
 );
 
 
 my %old_initrule = (header => $qy_old[2], query => ". IN MAILB",);
 
 my @iq_old = (
-"1,IQUERY,0,0,1,0,0,0,FORMERR,0,0,0,0",    # iq_old0
-"1,IQUERY,0,0,1,0,0,0,FORMERR,1,0,0,0",    # iq_old1
-"1,IQUERY,0,0,1,0,0,0,NOTIMP,0,0,0,0",     # iq_old2
-"1,IQUERY,0,0,1,0,0,0,NOTIMP,1,0,0,0",     # iq_old3
-"1,IQUERY,0,0,1,1,0,0,FORMERR,0,0,0,0",    # iq_old4
-"1,IQUERY,0,0,1,1,0,0,NOTIMP,0,0,0,0",     # iq_old5
-"1,IQUERY,0,0,1,1,0,0,NOTIMP,1,0,0,0",     # iq_old6
-"1,IQUERY,1,0,1,0,0,0,NOTIMP,1,0,0,0",     # iq_old7
-"1,QUERY,1,0,1,0,0,0,NOTIMP,1,0,0,0",
-"1,QUERY,0,0,0,0,0,0,NOTIMP,0,0,0,0",
-"1,IQUERY,0,0,1,1,0,0,FORMERR,1,0,0,0",    # iq_old10
-"1,NS_NOTIFY_OP,0,0,0,0,0,0,FORMERR,1,0,0,0",
-"1,NS_NOTIFY_OP,0,0,0,0,0,0,NOTIMP,0,0,0,0",
-"1,NS_NOTIFY_OP,0,0,0,0,0,0,NOTIMP,1,0,0,0",
-"1,NS_NOTIFY_OP,0,0,0,0,0,0,NXDOMAIN,1,0,0,0",
-"1,NS_NOTIFY_OP,0,0,0,0,0,0,REFUSED,1,0,0,0",
-"1,NS_NOTIFY_OP,0,0,0,0,0,0,SERVFAIL,1,0,0,0",
-"1,NS_NOTIFY_OP,0,0,0,1,0,0,FORMERR,1,0,0,0",
-"1,NS_NOTIFY_OP,0,0,0,1,0,0,NOTIMP,0,0,0,0",
-"1,NS_NOTIFY_OP,0,0,0,1,0,0,NOTIMP,1,0,0,0",
-"1,NS_NOTIFY_OP,0,0,0,1,0,0,REFUSED,1,0,0,0",    # iq_old20
-"1,NS_NOTIFY_OP,0,0,0,1,0,0,SERVFAIL,1,0,0,0",
-"1,NS_NOTIFY_OP,1,0,0,0,0,0,NOTIMP,1,0,0,0",
-"1,QUERY,1,0,0,0,0,0,NOTIMP,1,0,0,0",
-"1,NS_NOTIFY_OP,1,0,0,0,0,0,SERVFAIL,1,0,0,0",
-"1,IQUERY,0,0,0,0,1,1,NOTIMP,0,0,0,0",
-"1,IQUERY,0,0,0,0,0,0,NOTIMP,0,0,0,0",
-"1,IQUERY,0,0,1,1,1,1,FORMERR,0,0,0,0",
-"1,IQUERY,1,0,1,1,1,1,FORMERR,0,0,0,0",
-"1,QUERY,.,0,1,.,.,.,NOTIMP,.+,.+,.+,.+",
-"1,QUERY,.,0,1,.,.,.,.+,.+,.+,.+,.+",            #iq_old30
-"1,QUERY,0,0,.,.,0,0,NXDOMAIN,1,0,0,0",
-"1,QUERY,0,0,.,.,0,0,FORMERR,1,0,0,0",
-"1,UPDATE,0,0,0,0,0,0,NOTIMP,0,0,0,0",
-"1,UPDATE,0,0,0,1,0,0,NOTIMP,0,0,0,0",
-"1,QUERY,0,0,1,0,0,0,NOERROR,1,0,0,0",
-"1,QUERY,1,1,1,1,1,1,NOTIMP,1,0,0,0",
-"1,QUERY,0,0,0,0,0,0,NOERROR,1,0,.+,0",
-"1,QUERY,0,0,1,0,0,0,FORMERR,1,0,0,0",
-"1,IQUERY,0,0,1,0,1,1,NOTIMP,1,0,0,0",
-"1,IQUERY,0,0,0,1,1,1,REFUSED,1,0,0,0",          #iq_old40
-"1,UPDATE,0,0,0,1,0,0,REFUSED,1,0,0,0",
-"1,IQUERY,0,0,0,1,1,1,FORMERR,0,0,0,0",
-"1,IQUERY,0,0,0,1,0,0,NOTIMP,0,0,0,0",
-"1,QUERY,1,0,1,0,0,0,FORMERR,1,0,0,0",
-"1,UPDATE,0,0,0,0,0,0,FORMERR,1,0,0,0",
-"1,UPDATE,0,0,0,0,0,0,FORMERR,0,0,0,0",
-"1,QUERY,0,0,1,0,0,0,FORMERR,0,0,0,0",
-"1,QUERY,0,0,1,0,0,0,SERVFAIL,1,0,0,0",          #iq_old48
-"1,QUERY,1,0,1,0,0,0,NXDOMAIN,1,0,1,0",
-"1,QUERY,0,0,1,0,0,0,REFUSED,1,0,0,0",           #iq_old50
-"1,QUERY,0,0,1,0,0,0,NOERROR,1,1,0,0",
-"1,IQUERY,0,0,1,0,0,0,REFUSED,0,0,0,0",
-"1,QUERY,0,0,0,0,0,0,FORMERR,0,0,0,0",
-"1,QUERY,0,0,1,1,1,0,NOERROR,1,0,1,0",
-"1,QUERY,0,0,1,1,0,0,NOERROR,1,0,1,0",
-"1,QUERY,0,0,1,0,1,0,NOERROR,.+,.+,.+,.+",
-"1,QUERY,0,0,1,0,0,0,.+,.+,.+,.+,.+",
-"1,QUERY,1,0,1,0,0,0,NOERROR,1,1,0,0",
-"1,QUERY,0,0,1,1,0,0,SERVFAIL,1,0,0,0",
-"1,QUERY,1,0,1,1,0,0,NOERROR,1,1,0,0",           #iq_old60
-"1,QUERY,0,0,1,1,0,0,REFUSED,1,0,0,0",
-"1,QUERY,0,0,0,0,0,0,NOTIMP,1,0,0,0",
-"1,QUERY,1,0,1,1,0,0,NOERROR,1,0,1,0",
-"1,IQUERY,0,0,1,1,1,1,NOTIMP,0,0,0,0",
-"1,UPDATE,0,0,0,0,0,0,REFUSED,0,0,0,0",
-"1,IQUERY,0,0,0,1,1,1,NOTIMP,1,0,0,0",
-"1,IQUERY,0,0,0,1,0,0,NOTIMP,1,0,0,0",
-"1,QUERY,0,1,1,1,1,1,NOERROR,1,0,.,0",
-"1,QUERY,0,1,1,1,0,1,NOERROR,1,0,.,0",
-"1,IQUERY,0,0,1,0,0,0,REFUSED,1,0,0,0",          #iq_old70
-"1,IQUERY,1,0,1,1,1,1,NOTIMP,1,0,0,0",
-"1,IQUERY,0,0,1,0,0,0,NOERROR,1,0,0,0",
-"1,QUERY,1,0,1,1,0,0,NOERROR,1,0,0,0",
-"1,IQUERY,1,0,1,1,0,0,NXDOMAIN,1,0,0,0",
-"1,UPDATE,0,0,0,1,0,0,FORMERR,0,0,0,0",
-"1,IQUERY,1,0,1,0,0,0,NXDOMAIN,1,0,0,0",
-"1,QUERY,0,0,1,1,0,0,FORMERR,1,0,0,0",
-"1,QUERY,0,0,0,1,0,0,SERVFAIL,1,0,0,0",
-"1,QUERY,0,0,1,1,0,0,NOERROR,1,1,0,0",
-"1,IQUERY,1,0,1,0,0,0,NOERROR,1,0,1,0",          #iq_old80
-"1,IQUERY,1,0,1,1,0,0,NOTIMP,1,0,0,0",
-"1,QUERY,0,0,1,1,0,0,NOERROR,1,0,0,0",
-"1,QUERY,1,0,1,1,0,0,NOERROR,1,1,1,.+",
-"1,QUERY,0,0,1,1,0,0,REFUSED,0,0,0,0",
-"1,UPDATE,0,0,0,1,0,0,NOTIMP,1,0,0,0",
-"1,QUERY,1,0,0,1,0,0,NXDOMAIN,1,0,0,0",
-"1,QUERY,0,0,0,1,0,0,NOTIMP,0,0,0,0",
-"1,QUERY,0,0,0,0,0,0,REFUSED,1,0,0,0",
-"1,QUERY,1,0,1,1,0,0,NXDOMAIN,1,0,0,0",          #iq_old89
-"1,QUERY,1,0,0,0,0,0,NOERROR,1,1,0,0",           #iq_old90
-"1,IQUERY,1,0,1,1,0,1,NOTIMP,1,0,0,0",
-"1,QUERY,0,0,0,1,0,0,NOTIMP,1,0,0,0",
-"1,QUERY,0,0,1,0,0,1,SERVFAIL,1,0,0,0",
-"1,QUERY,0,0,0,1,0,0,NOERROR,1,0,13,13",         #iq_old94
-"1,QUERY,0,0,0,1,0,0,NOERROR,1,0,1,0",           #iq_old95
-"1,QUERY,0,0,1,0,0,0,NOERROR,1,0,13,13",
-"1,IQUERY,1,0,0,0,0,0,NOTIMP,1,0,0,0",           #iq_old97
-"1,IQUERY,1,0,0,0,1,1,NOTIMP,1,0,0,0",           #iq_old98
-"1,IQUERY,0,0,1,1,0,0,NOERROR,1,0,1,0",          #iq_old99
-"1,QUERY,.,0,1,0,0,0,NOERROR,1,0,0,0",           #iq_old100
-"1,QUERY,0,0,1,0,0,0,NXDOMAIN,1,0,0,0",          #101
+    "1,IQUERY,0,0,1,0,0,0,FORMERR,0,0,0,0",    # iq_old0
+    "1,IQUERY,0,0,1,0,0,0,FORMERR,1,0,0,0",    # iq_old1
+    "1,IQUERY,0,0,1,0,0,0,NOTIMP,0,0,0,0",     # iq_old2
+    "1,IQUERY,0,0,1,0,0,0,NOTIMP,1,0,0,0",     # iq_old3
+    "1,IQUERY,0,0,1,1,0,0,FORMERR,0,0,0,0",    # iq_old4
+    "1,IQUERY,0,0,1,1,0,0,NOTIMP,0,0,0,0",     # iq_old5
+    "1,IQUERY,0,0,1,1,0,0,NOTIMP,1,0,0,0",     # iq_old6
+    "1,IQUERY,1,0,1,0,0,0,NOTIMP,1,0,0,0",     # iq_old7
+    "1,QUERY,1,0,1,0,0,0,NOTIMP,1,0,0,0",
+    "1,QUERY,0,0,0,0,0,0,NOTIMP,0,0,0,0",
+    "1,IQUERY,0,0,1,1,0,0,FORMERR,1,0,0,0",    # iq_old10
+    "1,NS_NOTIFY_OP,0,0,0,0,0,0,FORMERR,1,0,0,0",
+    "1,NS_NOTIFY_OP,0,0,0,0,0,0,NOTIMP,0,0,0,0",
+    "1,NS_NOTIFY_OP,0,0,0,0,0,0,NOTIMP,1,0,0,0",
+    "1,NS_NOTIFY_OP,0,0,0,0,0,0,NXDOMAIN,1,0,0,0",
+    "1,NS_NOTIFY_OP,0,0,0,0,0,0,REFUSED,1,0,0,0",
+    "1,NS_NOTIFY_OP,0,0,0,0,0,0,SERVFAIL,1,0,0,0",
+    "1,NS_NOTIFY_OP,0,0,0,1,0,0,FORMERR,1,0,0,0",
+    "1,NS_NOTIFY_OP,0,0,0,1,0,0,NOTIMP,0,0,0,0",
+    "1,NS_NOTIFY_OP,0,0,0,1,0,0,NOTIMP,1,0,0,0",
+    "1,NS_NOTIFY_OP,0,0,0,1,0,0,REFUSED,1,0,0,0",    # iq_old20
+    "1,NS_NOTIFY_OP,0,0,0,1,0,0,SERVFAIL,1,0,0,0",
+    "1,NS_NOTIFY_OP,1,0,0,0,0,0,NOTIMP,1,0,0,0",
+    "1,QUERY,1,0,0,0,0,0,NOTIMP,1,0,0,0",
+    "1,NS_NOTIFY_OP,1,0,0,0,0,0,SERVFAIL,1,0,0,0",
+    "1,IQUERY,0,0,0,0,1,1,NOTIMP,0,0,0,0",
+    "1,IQUERY,0,0,0,0,0,0,NOTIMP,0,0,0,0",
+    "1,IQUERY,0,0,1,1,1,1,FORMERR,0,0,0,0",
+    "1,IQUERY,1,0,1,1,1,1,FORMERR,0,0,0,0",
+    "1,QUERY,.,0,1,.,.,.,NOTIMP,.+,.+,.+,.+",
+    "1,QUERY,.,0,1,.,.,.,.+,.+,.+,.+,.+",            #iq_old30
+    "1,QUERY,0,0,.,.,0,0,NXDOMAIN,1,0,0,0",
+    "1,QUERY,0,0,.,.,0,0,FORMERR,1,0,0,0",
+    "1,UPDATE,0,0,0,0,0,0,NOTIMP,0,0,0,0",
+    "1,UPDATE,0,0,0,1,0,0,NOTIMP,0,0,0,0",
+    "1,QUERY,0,0,1,0,0,0,NOERROR,1,0,0,0",
+    "1,QUERY,1,1,1,1,1,1,NOTIMP,1,0,0,0",
+    "1,QUERY,0,0,0,0,0,0,NOERROR,1,0,.+,0",
+    "1,QUERY,0,0,1,0,0,0,FORMERR,1,0,0,0",
+    "1,IQUERY,0,0,1,0,1,1,NOTIMP,1,0,0,0",
+    "1,IQUERY,0,0,0,1,1,1,REFUSED,1,0,0,0",          #iq_old40
+    "1,UPDATE,0,0,0,1,0,0,REFUSED,1,0,0,0",
+    "1,IQUERY,0,0,0,1,1,1,FORMERR,0,0,0,0",
+    "1,IQUERY,0,0,0,1,0,0,NOTIMP,0,0,0,0",
+    "1,QUERY,1,0,1,0,0,0,FORMERR,1,0,0,0",
+    "1,UPDATE,0,0,0,0,0,0,FORMERR,1,0,0,0",
+    "1,UPDATE,0,0,0,0,0,0,FORMERR,0,0,0,0",
+    "1,QUERY,0,0,1,0,0,0,FORMERR,0,0,0,0",
+    "1,QUERY,0,0,1,0,0,0,SERVFAIL,1,0,0,0",          #iq_old48
+    "1,QUERY,1,0,1,0,0,0,NXDOMAIN,1,0,1,0",
+    "1,QUERY,0,0,1,0,0,0,REFUSED,1,0,0,0",           #iq_old50
+    "1,QUERY,0,0,1,0,0,0,NOERROR,1,1,0,0",
+    "1,IQUERY,0,0,1,0,0,0,REFUSED,0,0,0,0",
+    "1,QUERY,0,0,0,0,0,0,FORMERR,0,0,0,0",
+    "1,QUERY,0,0,1,1,1,0,NOERROR,1,0,1,0",
+    "1,QUERY,0,0,1,1,0,0,NOERROR,1,0,1,0",
+    "1,QUERY,0,0,1,0,1,0,NOERROR,.+,.+,.+,.+",
+    "1,QUERY,0,0,1,0,0,0,.+,.+,.+,.+,.+",
+    "1,QUERY,1,0,1,0,0,0,NOERROR,1,1,0,0",
+    "1,QUERY,0,0,1,1,0,0,SERVFAIL,1,0,0,0",
+    "1,QUERY,1,0,1,1,0,0,NOERROR,1,1,0,0",           #iq_old60
+    "1,QUERY,0,0,1,1,0,0,REFUSED,1,0,0,0",
+    "1,QUERY,0,0,0,0,0,0,NOTIMP,1,0,0,0",
+    "1,QUERY,1,0,1,1,0,0,NOERROR,1,0,1,0",
+    "1,IQUERY,0,0,1,1,1,1,NOTIMP,0,0,0,0",
+    "1,UPDATE,0,0,0,0,0,0,REFUSED,0,0,0,0",
+    "1,IQUERY,0,0,0,1,1,1,NOTIMP,1,0,0,0",
+    "1,IQUERY,0,0,0,1,0,0,NOTIMP,1,0,0,0",
+    "1,QUERY,0,1,1,1,1,1,NOERROR,1,0,.,0",
+    "1,QUERY,0,1,1,1,0,1,NOERROR,1,0,.,0",
+    "1,IQUERY,0,0,1,0,0,0,REFUSED,1,0,0,0",          #iq_old70
+    "1,IQUERY,1,0,1,1,1,1,NOTIMP,1,0,0,0",
+    "1,IQUERY,0,0,1,0,0,0,NOERROR,1,0,0,0",
+    "1,QUERY,1,0,1,1,0,0,NOERROR,1,0,0,0",
+    "1,IQUERY,1,0,1,1,0,0,NXDOMAIN,1,0,0,0",
+    "1,UPDATE,0,0,0,1,0,0,FORMERR,0,0,0,0",
+    "1,IQUERY,1,0,1,0,0,0,NXDOMAIN,1,0,0,0",
+    "1,QUERY,0,0,1,1,0,0,FORMERR,1,0,0,0",
+    "1,QUERY,0,0,0,1,0,0,SERVFAIL,1,0,0,0",
+    "1,QUERY,0,0,1,1,0,0,NOERROR,1,1,0,0",
+    "1,IQUERY,1,0,1,0,0,0,NOERROR,1,0,1,0",          #iq_old80
+    "1,IQUERY,1,0,1,1,0,0,NOTIMP,1,0,0,0",
+    "1,QUERY,0,0,1,1,0,0,NOERROR,1,0,0,0",
+    "1,QUERY,1,0,1,1,0,0,NOERROR,1,1,1,.+",
+    "1,QUERY,0,0,1,1,0,0,REFUSED,0,0,0,0",
+    "1,UPDATE,0,0,0,1,0,0,NOTIMP,1,0,0,0",
+    "1,QUERY,1,0,0,1,0,0,NXDOMAIN,1,0,0,0",
+    "1,QUERY,0,0,0,1,0,0,NOTIMP,0,0,0,0",
+    "1,QUERY,0,0,0,0,0,0,REFUSED,1,0,0,0",
+    "1,QUERY,1,0,1,1,0,0,NXDOMAIN,1,0,0,0",          #iq_old89
+    "1,QUERY,1,0,0,0,0,0,NOERROR,1,1,0,0",           #iq_old90
+    "1,IQUERY,1,0,1,1,0,1,NOTIMP,1,0,0,0",
+    "1,QUERY,0,0,0,1,0,0,NOTIMP,1,0,0,0",
+    "1,QUERY,0,0,1,0,0,1,SERVFAIL,1,0,0,0",
+    "1,QUERY,0,0,0,1,0,0,NOERROR,1,0,13,13",         #iq_old94
+    "1,QUERY,0,0,0,1,0,0,NOERROR,1,0,1,0",           #iq_old95
+    "1,QUERY,0,0,1,0,0,0,NOERROR,1,0,13,13",
+    "1,IQUERY,1,0,0,0,0,0,NOTIMP,1,0,0,0",           #iq_old97
+    "1,IQUERY,1,0,0,0,1,1,NOTIMP,1,0,0,0",           #iq_old98
+    "1,IQUERY,0,0,1,1,0,0,NOERROR,1,0,1,0",          #iq_old99
+    "1,QUERY,.,0,1,0,0,0,NOERROR,1,0,0,0",           #iq_old100
+    "1,QUERY,0,0,1,0,0,0,NXDOMAIN,1,0,0,0",          #101
 );
 
 my @old_ruleset = (
 {
   fingerprint => $iq_old[89],
-  result =>
-  { vendor => "Simon Kelley", product => "dnsmasq", version => "" },
+  result => {
+    vendor => "Simon Kelley",
+    product => "dnsmasq",
+    version => ""
+  },
   qv => "version.bind",
 },
 {
@@ -511,8 +515,7 @@ my @old_ruleset = (
         {
           fingerprint => $iq_old[34],
           header      => $qy_old[2],
-          query =>
-          "012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012345678901234567890123456789012345678901234567890. IN A",
+          query => "012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012345678901234567890123456789012345678901234567890. IN A",
           ruleset => [
           {
             fingerprint => $iq_old[47],
@@ -531,8 +534,7 @@ my @old_ruleset = (
             {
               fingerprint => $iq_old[50],
               result      => {
-                vendor =>
-                "NLnetLabs",
+                vendor => "NLnetLabs",
                 product => "NSD",
                 version => "1.2.2"
               },
@@ -544,45 +546,32 @@ my @old_ruleset = (
               query       => ". IN A",
               ruleset     => [
               {
-                fingerprint =>
-                $iq_old[93],
+                fingerprint => $iq_old[93],
                 result => {
-                  vendor =>
-                  "NLnetLabs",
-                  product =>
-                  "NSD",
-                  version =>
-                  "1.2.3 -- 2.1.2"
+                  vendor => "NLnetLabs",
+                  product => "NSD",
+                  version => "1.2.3 -- 2.1.2"
                 },
-                qv =>
-                "version.server",
+                qv => "version.server",
               },
               {
-                fingerprint =>
-                $iq_old[48],
+                fingerprint => $iq_old[48],
                 result => {
-                  vendor =>
-                  "NLnetLabs",
-                  product =>
-                  "NSD",
-                  version =>
-                  "2.1.3"
+                  vendor => "NLnetLabs",
+                  product => "NSD",
+                  version => "2.1.3"
                 },
-                qv =>
-                "version.server",
+                qv => "version.server",
               },
               {
-                fingerprint =>
-                ".+",
-                state =>
-                "q0r2q1r12q3r25q6r34q2r48q2r51q8r?",
+                fingerprint => ".+",
+                state => "q0r2q1r12q3r25q6r34q2r48q2r51q8r?",
               },
               ]
             },
             {
               fingerprint => ".+",
-              state =>
-              "q0r2q1r12q3r25q6r34q2r48q2r?",
+              state => "q0r2q1r12q3r25q6r34q2r48q2r?",
             },
             ]
           },
@@ -594,29 +583,24 @@ my @old_ruleset = (
             {
               fingerprint => $iq_old[50],
               result      => {
-                vendor =>
-                "NLnetLabs",
+                vendor => "NLnetLabs",
                 product => "NSD",
-                version =>
-                "1.2.2 [root]"
+                version => "1.2.2 [root]"
               },
               qv => "version.server",
             },
             {
               fingerprint => $iq_old[51],
               result      => {
-                vendor =>
-                "NLnetLabs",
+                vendor => "NLnetLabs",
                 product => "NSD",
-                version =>
-                "1.2.3 [root]"
+                version => "1.2.3 [root]"
               },
               qv => "version.server",
             },
             {
               fingerprint => ".+",
-              state =>
-              "q0r2q1r12q3r25q6r34q2r49q2r?",
+              state => "q0r2q1r12q3r25q6r34q2r49q2r?",
             },
             ]
           },
@@ -631,8 +615,7 @@ my @old_ruleset = (
           },
           {
             fingerprint => ".+",
-            state =>
-            "q0r2q1r12q3r25q6r34q2a?",
+            state => "q0r2q1r12q3r25q6r34q2a?",
           },
           ]
         },
@@ -913,8 +896,7 @@ my @old_ruleset = (
         result      => {
           vendor  => "ISC",
           product => "BIND",
-          version =>
-          "8.1-REL -- 8.2.1-T4B [recursion enabled]"
+          version => "8.1-REL -- 8.2.1-T4B [recursion enabled]"
         },
         qv => "version.bind",
       },
@@ -931,8 +913,7 @@ my @old_ruleset = (
         result      => {
           vendor  => "ISC",
           product => "BIND",
-          version =>
-          "8.3.0-RC1 -- 8.4.4 [recursion enabled]"
+          version => "8.3.0-RC1 -- 8.4.4 [recursion enabled]"
         },
         qv => "version.bind",
       },
@@ -946,8 +927,7 @@ my @old_ruleset = (
           result      => {
             vendor  => "ISC",
             product => "BIND",
-            version =>
-            "8.1-REL -- 8.2.1-T4B [recursion enabled]"
+            version => "8.1-REL -- 8.2.1-T4B [recursion enabled]"
           },
           qv => "version.bind",
         },
@@ -956,8 +936,7 @@ my @old_ruleset = (
           result      => {
             vendor  => "ISC",
             product => "BIND",
-            version =>
-            "8.2.2-P3 -- 8.3.0-T2A [recursion enabled]"
+            version => "8.2.2-P3 -- 8.3.0-T2A [recursion enabled]"
           },
           qv => "version.bind",
         },
@@ -981,8 +960,7 @@ my @old_ruleset = (
         result      => {
           vendor  => "ISC",
           product => "BIND",
-          version =>
-          "8.3.0-RC1 -- 8.4.4 [recursion local]"
+          version => "8.3.0-RC1 -- 8.4.4 [recursion local]"
         },
         qv => "version.bind",
       },
@@ -991,8 +969,7 @@ my @old_ruleset = (
         result      => {
           vendor  => "ISC",
           product => "BIND",
-          version =>
-          "8.3.0-RC1 -- 8.4.4 [recursion local]"
+          version => "8.3.0-RC1 -- 8.4.4 [recursion local]"
         },
         qv => "version.bind",
       },
@@ -1001,8 +978,7 @@ my @old_ruleset = (
         result      => {
           vendor  => "ISC",
           product => "BIND",
-          version =>
-          "8.3.0-RC1 -- 8.4.4 [recursion local]"
+          version => "8.3.0-RC1 -- 8.4.4 [recursion local]"
         },
         qv => "version.bind",
       },
@@ -1011,8 +987,7 @@ my @old_ruleset = (
         result      => {
           vendor  => "ISC",
           product => "BIND",
-          version =>
-          "8.2.2-P3 -- 8.3.0-T2A [recursion local]"
+          version => "8.2.2-P3 -- 8.3.0-T2A [recursion local]"
         },
         qv => "version.bind",
       },
@@ -1102,8 +1077,7 @@ my @old_ruleset = (
         result      => {
           vendor  => "ISC",
           product => "BIND",
-          version =>
-          "9.0.0b5 -- 9.0.1 [recursion enabled]"
+          version => "9.0.0b5 -- 9.0.1 [recursion enabled]"
         },
         qv => "version.bind",
       },
@@ -1112,8 +1086,7 @@ my @old_ruleset = (
         result      => {
           vendor  => "ISC",
           product => "BIND",
-          version =>
-          "9.1.0 -- 9.1.3 [recursion enabled]"
+          version => "9.1.0 -- 9.1.3 [recursion enabled]"
         },
         qv => "version.bind",
       },
@@ -1122,8 +1095,7 @@ my @old_ruleset = (
         result      => {
           vendor  => "ISC",
           product => "BIND",
-          version =>
-          "4.9.3 -- 4.9.11 [recursion enabled]"
+          version => "4.9.3 -- 4.9.11 [recursion enabled]"
         },
         qv => "version.bind",
       },
@@ -1132,8 +1104,7 @@ my @old_ruleset = (
         result      => {
           vendor  => "ISC",
           product => "BIND",
-          version =>
-          "9.0.0b5 -- 9.1.3 [recursion local]"
+          version => "9.0.0b5 -- 9.1.3 [recursion local]"
         },
         qv => "version.bind",
       },
@@ -1149,8 +1120,7 @@ my @old_ruleset = (
         result      => {
           vendor  => "ISC",
           product => "BIND",
-          version =>
-          "9.2.0a1 -- 9.2.2-P3 [recursion enabled]"
+          version => "9.2.0a1 -- 9.2.2-P3 [recursion enabled]"
         },
         qv => "version.bind",
       },
@@ -1159,8 +1129,7 @@ my @old_ruleset = (
         result      => {
           vendor  => "ISC",
           product => "BIND",
-          version =>
-          "9.2.0a1 -- 9.2.0rc3 [recursion enabled]"
+          version => "9.2.0a1 -- 9.2.0rc3 [recursion enabled]"
         },
         qv => "version.bind",
       },
@@ -1174,8 +1143,7 @@ my @old_ruleset = (
           result      => {
             vendor  => "ISC",
             product => "BIND",
-            version =>
-            "9.2.0rc7 -- 9.2.2-P3 [recursion local]"
+            version => "9.2.0rc7 -- 9.2.2-P3 [recursion local]"
           },
           qv => "version.bind",
         },
@@ -1184,8 +1152,7 @@ my @old_ruleset = (
           result      => {
             vendor  => "ISC",
             product => "BIND",
-            version =>
-            "9.2.0a1 -- 9.2.0rc6 [recursion local]"
+            version => "9.2.0a1 -- 9.2.0rc6 [recursion local]"
           },
           qv => "version.bind",
         },
@@ -1194,8 +1161,7 @@ my @old_ruleset = (
           result      => {
             vendor  => "ISC",
             product => "BIND",
-            version =>
-            "9.2.0a1 -- 9.2.2-P3 [recursion local]"
+            version => "9.2.0a1 -- 9.2.2-P3 [recursion local]"
           },
           qv => "version.bind",
         },
@@ -1211,8 +1177,7 @@ my @old_ruleset = (
           result      => {
             vendor  => "ISC",
             product => "BIND",
-            version =>
-            "9.2.0rc7 -- 9.2.2-P3 [recursion enabled]"
+            version => "9.2.0rc7 -- 9.2.2-P3 [recursion enabled]"
           },
           qv => "version.bind",
         },
@@ -1221,8 +1186,7 @@ my @old_ruleset = (
           result      => {
             vendor  => "ISC",
             product => "BIND",
-            version =>
-            "9.2.0rc4 -- 9.2.0rc6 [recursion enabled]"
+            version => "9.2.0rc4 -- 9.2.0rc6 [recursion enabled]"
           },
           qv => "version.bind",
         },
@@ -1231,8 +1195,7 @@ my @old_ruleset = (
           result      => {
             vendor  => "ISC",
             product => "BIND",
-            version =>
-            "9.2.0rc4 -- 9.2.2-P3 [recursion enabled]"
+            version => "9.2.0rc4 -- 9.2.2-P3 [recursion enabled]"
           },
           qv => "version.bind",
         },
@@ -1377,8 +1340,11 @@ my @old_ruleset = (
 
   {
     fingerprint => $iq_old[10],
-    result =>
-    { vendor => "Microsoft", product => "?", version => "" },
+    result => {
+        vendor => "Microsoft",
+        product => "?",
+        version => ""
+     },
   },
   {
     fingerprint => $iq_old[26],
@@ -1527,8 +1493,11 @@ my @old_ruleset = (
   },
   {
     fingerprint => $iq_old[72],
-    result =>
-    { vendor => "", product => "sheerdns", version => "" },
+    result => {
+        vendor => "",
+        product => "sheerdns",
+        version => ""
+    },
   },
   {
     fingerprint => $iq_old[73],
@@ -1540,8 +1509,11 @@ my @old_ruleset = (
   },
   {
     fingerprint => $iq_old[74],
-    result =>
-    { vendor => "Brad Garcia", product => "dnrd", version => "" },
+    result => {
+        vendor => "Brad Garcia",
+        product => "dnrd",
+        version => ""
+    },
   },
   {
     fingerprint => $iq_old[76],
@@ -1625,8 +1597,11 @@ my @old_ruleset = (
   },
   {
     fingerprint => $iq_old[89],
-    result =>
-    { vendor => "Alteon", product => "ACEswitch", version => "" },
+    result => {
+        vendor => "Alteon",
+        product => "ACEswitch",
+        version => ""
+    },
   },
   {
     fingerprint => $iq_old[90],
@@ -1638,13 +1613,19 @@ my @old_ruleset = (
   },
   {
     fingerprint => $iq_old[92],
-    result =>
-    { vendor => "Beehive", product => "CoDoNS", version => "" },
+    result => {
+        vendor => "Beehive",
+        product => "CoDoNS",
+        version => ""
+    },
   },
   {
     fingerprint => $iq_old[96],
-    result =>
-    { vendor => "Beevihe", product => "AAAAAA", version => "" },
+    result => {
+        vendor => "Beevihe",
+        product => "AAAAAA",
+        version => ""
+    },
     qv => "version.bind",
   },
   {
