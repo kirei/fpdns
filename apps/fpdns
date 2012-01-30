@@ -117,7 +117,7 @@ sub fingerprint {
               || print "fingerprint ($server, $a): $fp\n";
         }
     } else {
-        print STDERR "host not found ($server)";
+        print STDERR "host not found ($server)\n";
     }
 }
 
@@ -127,7 +127,8 @@ sub dnslookup {
     return $arg if ($arg =~ /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/);
 
     my $resolver =
-      Net::DNS::Resolver->new(srcaddr => $opt{Q}, usevc => $opt{T});
+      Net::DNS::Resolver->new(usevc => $opt{T});
+    $resolver->srcaddr($opt{Q}) if $opt{Q};
     if ($opt{D}) {
         my $query = $resolver->send($arg, "NS");
         if ($query) {
