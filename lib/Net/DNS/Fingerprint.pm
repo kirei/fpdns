@@ -27,13 +27,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 5.006_000;
-
 package Net::DNS::Fingerprint;
 
 use strict;
 use warnings;
-use Net::DNS 0.42;
+use Net::DNS;
 
 our $VERSION = "0.10.0";
 
