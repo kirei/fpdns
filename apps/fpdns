@@ -54,7 +54,7 @@ sub main {
 
     my $concurrent = 0;
 
-    getopts('Q:DF:p:t:r:cfsS:dTv', \%opt);
+    getopts('Q:DF:p:t:rfsS:dTv', \%opt);
 
     $opt{v} && die "$progname version $version\n";
 
@@ -157,10 +157,9 @@ sub dnslookup {
 
 sub usage {
     print STDERR <<EOF;
-Usage: $progname [-c] [-d] [-D] [-f] [-p port] [-Q srcaddr] [-r retry] [-s] [-t timeout] [-T] [-v] server(s)|Domain
+Usage: $progname [-d] [-D] [-f] [-p port] [-Q srcaddr] [-r retry] [-s] [-t timeout] [-T] [-v] server(s)|Domain
 Where: server|Domain is an ip address, a resolvable name, or a domain name.
        or '-' to read list of servers from stdin
-       -c         (where appropriate check CH TXT version) [off]
        -d         (debug) [off]
        -D         (check all authoritative servers for Domain)
        -f         (force check CH TXT version) [off]
@@ -187,7 +186,7 @@ fpdns - DNS server fingeprinting tool
 
 =head1 SYNOPSIS
 
-B<fpdns> S<[ B<-c> ]> S<[ B<-d> ]> S<[ B<-f> ]> S<[ B<-F> I<nchild> ]>
+B<fpdns> S< S<[ B<-d> ]> S<[ B<-f> ]> S<[ B<-F> I<nchild> ]>
    S<[ B<-p> I<port> ]> S<[ B<-Q> I<srcaddr> ]> S<[ B<-r> I<retry> ]>
    S<[ B<-s> ]>  S<[ B<-S> I<separator> ]> S<[ B<-t> I<timeout> ]> S<[ B<-v> ]> [I<server(s)>]
 
@@ -207,10 +206,6 @@ I<Application Intelligence>.
 =head1 OPTIONS
 
 =over 5
-
-=item B<-c>
-
-Where appropriate check CH TXT version. Off by default. 
 
 =item B<-d>
 
