@@ -6,6 +6,6 @@ WriteMakefile(
     'PREREQ_PM'    => { Net::DNS => 0.42 },
     'EXE_FILES'    => ["apps/fpdns"],
     'NO_META'      => 1,
-    'SIGN'         => 1,
+    'SIGN'         => 0,
     clean          => { FILES => "*~" },
 );

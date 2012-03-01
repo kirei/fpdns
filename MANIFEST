@@ -1,6 +1,5 @@
 LICENSE
 MANIFEST
-SIGNATURE
 Makefile.PL
 lib/Net/DNS/Fingerprint.pm
 apps/fpdns
