@@ -1,5 +1,3 @@
-#!/usr/bin/perl
-#
 # $Id: Fingerprint.pm,v 1.17 2005/09/05 13:33:36 jakob Exp $
 #
 # Copyright (c) 2011 Verisign, Inc.
