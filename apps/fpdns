@@ -128,19 +128,25 @@ sub dnslookup {
     return $arg if ($arg =~ $IPv4RE);
     return $arg if ($arg =~ $IPv6RE);
 
-    my $resolver =
-      Net::DNS::Resolver->new(usevc => $opt{T});
+    my $resolver = Net::DNS::Resolver->new(usevc => $opt{T});
     $resolver->srcaddr($opt{Q}) if $opt{Q};
     if ($opt{D}) {
         my $query = $resolver->send($arg, "NS");
         if ($query) {
             for my $rr ($query->answer) {
-                my $query_address = $resolver->send($rr->rdatastr, "A")
-                  if $rr->type eq "NS";
+                next unless $rr->type eq "NS";
+                my $query_address = $resolver->send($rr->rdatastr, "A");
                 if ($query_address) {
                     for my $address_rr ($query_address->answer) {
                         push @addresses, $address_rr->address
                           if $address_rr->type eq "A";
+                    }
+                }
+                $query_address = $resolver->send($rr->rdatastr, "AAAA");
+                if ($query_address) {
+                    for my $address_rr ($query_address->answer) {
+                        push @addresses, $address_rr->address
+                          if $address_rr->type eq "AAAA";
                     }
                 }
             }
@@ -150,6 +156,12 @@ sub dnslookup {
         if ($query) {
             for my $rr ($query->answer) {
                 push @addresses, $rr->address if $rr->type eq "A";
+            }
+        }
+        $query = $resolver->send($arg, "AAAA");
+        if ($query) {
+            for my $rr ($query->answer) {
+                push @addresses, $rr->address if $rr->type eq "AAAA";
             }
         }
     }
