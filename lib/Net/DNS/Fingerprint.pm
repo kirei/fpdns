@@ -2152,8 +2152,7 @@ sub header2fp {
 
 sub fp2header {
     my @list = split(/,/, shift);
-
-    my $header = Net::DNS::Header->new;
+    my $header = shift;
 
     $header->qr(shift @list);
     $header->opcode(shift @list);
@@ -2168,8 +2167,6 @@ sub fp2header {
     $header->ancount(shift @list);
     $header->nscount(shift @list);
     $header->arcount(shift @list);
-
-    return $header;
 }
 
 sub probe {
@@ -2180,9 +2177,8 @@ sub probe {
     my $qheader = shift;
     my @qstring = split(/ /, shift);
 
-    my $header = fp2header($qheader);
-
-    my $packet = Net::DNS::Packet->new(\$header->data);
+    my $packet = new Net::DNS::Packet;
+    fp2header($qheader, $packet->header);
     $packet->push("question", Net::DNS::Question->new(@qstring));
 
     if ($self->{debug}) {
@@ -2195,7 +2191,7 @@ sub probe {
     my $resolver = Net::DNS::Resolver->new;
     $resolver->nameservers($qserver);
     if (!$ignore_recurse) {
-        $resolver->recurse($header->rd);
+        $resolver->recurse($packet->header->rd);
     }
     $resolver->port($qport);
     $resolver->srcaddr($self->{source});
