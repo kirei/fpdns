@@ -1980,6 +1980,7 @@ sub string {
         push @s, $r{product}    if (defined $r{product});
         push @s, $r{version}    if (defined $r{version});
         push @s, "[$r{option}]" if (defined $r{option});
+        push @s, "[$r{ruleset} Rules]" if (defined $r{ruleset});
     }
 
     push @s, $r{vstring} if (defined $r{vstring});
@@ -2029,18 +2030,23 @@ sub init {
     my $qport   = shift;
 
     my %match =
-      $self->process($qserver, $qport, $initrule{header}, $initrule{query},
-        \@ruleset);
+      $self->process($qserver,
+	$qport,
+	$initrule{header},
+	$initrule{query},
+        \@ruleset,
+	"New");
 
-    if (defined $match{product}) {
-        return %match;
-    } else {
+    return %match if (defined $match{product});
 
-   #For backwards compatibility with old fingerprint code which never set the rd
-        $ignore_recurse = 1;
-        return $self->process($qserver, $qport, $old_initrule{header},
-            $old_initrule{query}, \@old_ruleset);
-    }
+    #For backwards compatibility with old fingerprint code which never set the rd
+    $ignore_recurse = 1;
+    return $self->process($qserver,
+	$qport,
+	$old_initrule{header},
+        $old_initrule{query},
+	\@old_ruleset,
+	"Old");
 }
 
 sub process {
@@ -2051,6 +2057,7 @@ sub process {
     my $qheader = shift;
     my $qstring = shift;
     my $ruleref = shift;
+    my $rulenam = shift;
     my $ver;
     my $id;
     my %ret;
@@ -2097,6 +2104,7 @@ sub process {
                 $ret{version} = $rule->{result}{version};
                 $ret{option}  = $rule->{result}{option};
                 $ret{state}   = $rule->{result}{state};
+		$ret{ruleset} = $rulenam;
             } else {
                 $ret{result} = $rule->{result};
             }
@@ -2126,7 +2134,7 @@ sub process {
         if (defined $rule->{header} && defined $rule->{ruleset}) {
             return $self->process(
                 $qserver, $qport, $rule->{header},
-                $qstring, $rule->{ruleset}
+                $qstring, $rule->{ruleset}, $rulenam
             );
         }
 
