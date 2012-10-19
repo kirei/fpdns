@@ -55,7 +55,7 @@ sub main {
 
     my $concurrent = 0;
 
-    getopts('Q:DF:p:t:rfsS:dTv', \%opt);
+    getopts('Q:DF:p:t:r:fsS:dTv', \%opt);
 
     $opt{v} && die "$progname version $version\n";
 
