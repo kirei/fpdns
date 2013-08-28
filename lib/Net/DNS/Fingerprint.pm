@@ -2171,10 +2171,12 @@ sub fp2header {
     $header->ad(shift @list);
     $header->cd(shift @list);
     $header->rcode(shift @list);
-    $header->qdcount(shift @list);
-    $header->ancount(shift @list);
-    $header->nscount(shift @list);
-    $header->arcount(shift @list);
+
+    my ($qdcount, $ancount, $nscount, $arcount) = @list;
+    $header->qdcount($qdcount) unless $qdcount == $header->qdcount;
+    $header->qdcount($ancount) unless $ancount == $header->ancount;
+    $header->qdcount($nscount) unless $nscount == $header->nscount;
+    $header->qdcount($arcount) unless $arcount == $header->arcount;
 }
 
 sub probe {
