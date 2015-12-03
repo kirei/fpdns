@@ -49,10 +49,20 @@ my $versionlength = 40;
 
 my $ignore_recurse = 0;
 
+#
+# This hack works around a problem in Net::DNS.  Up to Net::DNS 0.68
+# the opcode was coded as NS_NOTIFY_OP.  That was changed in version
+# 0.69 through 0.71 with no backwards compatibility.  This hack
+# tests for the new NOTIFY and falls back to NS_NOTIFY_OP if necessary.
+#
+my $NOTIFY = 'NOTIFY';
+eval { my $p = new Net::DNS::Packet; $p->header->opcode($NOTIFY); };
+$NOTIFY = 'NS_NOTIFY_OP' if $@;
+
 my @qy = (
     "0,QUERY,0,0,0,0,0,0,NOERROR,0,0,0,0",          #qy0
     "0,QUERY,0,0,0,1,0,1,NOERROR,0,0,0,0",          #qy1
-    "0,NS_NOTIFY_OP,0,1,1,0,1,1,NOTIMP,0,0,0,0",    #qy2
+    "0,$NOTIFY,0,1,1,0,1,1,NOTIMP,0,0,0,0",    #qy2
     "0,IQUERY,0,0,0,1,1,1,NOERROR,0,0,0,0",         #qy3
     "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",          #qy4
     "0,QUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",          #qy5
@@ -85,15 +95,15 @@ my @iq = (
     "1,QUERY,0,0,0,0,0,0,NXDOMAIN,1,0,0,0",           #iq1
     "1,QUERY,0,0,0,0,0,0,NOERROR,1,0,0,0",            #iq2
     "1,QUERY,0,0,0,1,0,0,NOERROR,.+,.+,.+,.+",        #iq3
-    "1,NS_NOTIFY_OP,0,0,1,1,0,1,FORMERR,1,0,0,0",     #iq4
-    "1,NS_NOTIFY_OP,0,0,1,1,0,0,FORMERR,1,0,0,0",     #iq5
-    "1,NS_NOTIFY_OP,0,0,1,1,0,0,REFUSED,1,0,0,0",     #iq6
-    "0,NS_NOTIFY_OP,0,1,1,0,1,1,NOTIMP,1,0,0,0",      #iq7
+    "1,$NOTIFY,0,0,1,1,0,1,FORMERR,1,0,0,0",     #iq4
+    "1,$NOTIFY,0,0,1,1,0,0,FORMERR,1,0,0,0",     #iq5
+    "1,$NOTIFY,0,0,1,1,0,0,REFUSED,1,0,0,0",     #iq6
+    "0,$NOTIFY,0,1,1,0,1,1,NOTIMP,1,0,0,0",      #iq7
     "1,IQUERY,0,0,0,1,0,0,NOTIMP,1,0,0,0",            #iq8
     "0,IQUERY,0,0,0,1,1,1,NOERROR,1,0,0,0",           #iq9
     "1,QUERY,0,0,1,0,0,0,NOTIMP,1,0,0,0",             #iq10
     "0,QUERY,0,0,1,0,0,0,NOERROR,1,0,0,0",            #iq11
-    "1,NS_NOTIFY_OP,0,0,1,1,0,0,SERVFAIL,1,0,0,0",    #iq12
+    "1,$NOTIFY,0,0,1,1,0,0,SERVFAIL,1,0,0,0",    #iq12
     "1,IQUERY,0,0,1,1,0,0,SERVFAIL,1,0,0,0",          #iq13
     "1,IQUERY,0,0,1,1,0,0,NOTIMP,0,0,0,0",            #iq14
     "1,QUERY,0,0,0,1,0,0,NOTIMP,.+,.+,.+,.+",         #iq15
@@ -406,7 +416,7 @@ my @ruleset = (
 
 my @qy_old = (
     "0,IQUERY,0,0,1,0,0,0,NOERROR,0,0,0,0",
-    "0,NS_NOTIFY_OP,0,0,0,0,0,0,NOERROR,0,0,0,0",
+    "0,$NOTIFY,0,0,0,0,0,0,NOERROR,0,0,0,0",
     "0,QUERY,0,0,0,0,0,0,NOERROR,0,0,0,0",
     "0,IQUERY,0,0,0,0,1,1,NOERROR,0,0,0,0",
     "0,QUERY,0,0,0,0,0,0,NOTIMP,0,0,0,0",
@@ -430,20 +440,20 @@ my @iq_old = (
     "1,QUERY,1,0,1,0,0,0,NOTIMP,1,0,0,0",
     "1,QUERY,0,0,0,0,0,0,NOTIMP,0,0,0,0",
     "1,IQUERY,0,0,1,1,0,0,FORMERR,1,0,0,0",    # iq_old10
-    "1,NS_NOTIFY_OP,0,0,0,0,0,0,FORMERR,1,0,0,0",
-    "1,NS_NOTIFY_OP,0,0,0,0,0,0,NOTIMP,0,0,0,0",
-    "1,NS_NOTIFY_OP,0,0,0,0,0,0,NOTIMP,1,0,0,0",
-    "1,NS_NOTIFY_OP,0,0,0,0,0,0,NXDOMAIN,1,0,0,0",
-    "1,NS_NOTIFY_OP,0,0,0,0,0,0,REFUSED,1,0,0,0",
-    "1,NS_NOTIFY_OP,0,0,0,0,0,0,SERVFAIL,1,0,0,0",
-    "1,NS_NOTIFY_OP,0,0,0,1,0,0,FORMERR,1,0,0,0",
-    "1,NS_NOTIFY_OP,0,0,0,1,0,0,NOTIMP,0,0,0,0",
-    "1,NS_NOTIFY_OP,0,0,0,1,0,0,NOTIMP,1,0,0,0",
-    "1,NS_NOTIFY_OP,0,0,0,1,0,0,REFUSED,1,0,0,0",    # iq_old20
-    "1,NS_NOTIFY_OP,0,0,0,1,0,0,SERVFAIL,1,0,0,0",
-    "1,NS_NOTIFY_OP,1,0,0,0,0,0,NOTIMP,1,0,0,0",
+    "1,$NOTIFY,0,0,0,0,0,0,FORMERR,1,0,0,0",
+    "1,$NOTIFY,0,0,0,0,0,0,NOTIMP,0,0,0,0",
+    "1,$NOTIFY,0,0,0,0,0,0,NOTIMP,1,0,0,0",
+    "1,$NOTIFY,0,0,0,0,0,0,NXDOMAIN,1,0,0,0",
+    "1,$NOTIFY,0,0,0,0,0,0,REFUSED,1,0,0,0",
+    "1,$NOTIFY,0,0,0,0,0,0,SERVFAIL,1,0,0,0",
+    "1,$NOTIFY,0,0,0,1,0,0,FORMERR,1,0,0,0",
+    "1,$NOTIFY,0,0,0,1,0,0,NOTIMP,0,0,0,0",
+    "1,$NOTIFY,0,0,0,1,0,0,NOTIMP,1,0,0,0",
+    "1,$NOTIFY,0,0,0,1,0,0,REFUSED,1,0,0,0",    # iq_old20
+    "1,$NOTIFY,0,0,0,1,0,0,SERVFAIL,1,0,0,0",
+    "1,$NOTIFY,1,0,0,0,0,0,NOTIMP,1,0,0,0",
     "1,QUERY,1,0,0,0,0,0,NOTIMP,1,0,0,0",
-    "1,NS_NOTIFY_OP,1,0,0,0,0,0,SERVFAIL,1,0,0,0",
+    "1,$NOTIFY,1,0,0,0,0,0,SERVFAIL,1,0,0,0",
     "1,IQUERY,0,0,0,0,1,1,NOTIMP,0,0,0,0",
     "1,IQUERY,0,0,0,0,0,0,NOTIMP,0,0,0,0",
     "1,IQUERY,0,0,1,1,1,1,FORMERR,0,0,0,0",
