@@ -117,6 +117,7 @@ my @iq = (
     "1,QUERY,0,0,0,0,0,0,REFUSED,0,0,0,0",            #iq23
     "1,QUERY,0,0,1,1,0,0,REFUSED,1,0,0,0",            #iq24
     "1,QUERY,0,0,1,1,0,0,NXDOMAIN,.+,.+,.+,.+",       #iq25
+    "1,QUERY,0,0,0,0,0,0,REFUSED,1,0,0,0",            #iq26
 );
 
 my @ruleset = (
@@ -411,6 +412,11 @@ my @ruleset = (
                 ]
             },
         ]
+    },
+    {
+        fingerprint => $iq[26],
+        result =>
+          { vendor =>"CZ.NIC", product=>"Knot DNS", version=>"1.1.0"},
     },
 );
 
