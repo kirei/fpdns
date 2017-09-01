@@ -243,7 +243,7 @@ public class QueryTree {
 
   /**
    * The perl implementation of fpdns fails to run when it tries to run a query
-   * that doesnt have "qdcount","ancount","nscount","arcount" all set to 0.
+   * that doesn't have "qdcount","ancount","nscount","arcount" all set to 0.
    *
    * @param header
    * @return a string representation of the header with the 'counts' set to 0
