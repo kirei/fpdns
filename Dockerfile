@@ -1,9 +1,10 @@
 FROM perl:5.26.0
 
 RUN apt-get update \
- && apt-get install libidn11-dev \
+ && apt-get -y install libidn11-dev \
+ && cpan install Net::DNS \
+ && apt-get -y purge libidn11-dev \
  && rm -rf /var/lib/apt/lists/*
-RUN cpan install Net::DNS
 
 COPY . /src
 WORKDIR /src
