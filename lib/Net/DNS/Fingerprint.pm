@@ -2184,9 +2184,9 @@ sub fp2header {
 
     my ($qdcount, $ancount, $nscount, $arcount) = @list;
     $header->qdcount($qdcount) unless $qdcount == $header->qdcount;
-    $header->qdcount($ancount) unless $ancount == $header->ancount;
-    $header->qdcount($nscount) unless $nscount == $header->nscount;
-    $header->qdcount($arcount) unless $arcount == $header->arcount;
+    $header->ancount($ancount) unless $ancount == $header->ancount;
+    $header->nscount($nscount) unless $nscount == $header->nscount;
+    $header->arcount($arcount) unless $arcount == $header->arcount;
 }
 
 sub probe {
