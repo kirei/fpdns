@@ -2012,7 +2012,7 @@ sub query_version {
 
     $resolver->nameservers($qserver);
     $resolver->port($qport);
-    $resolver->srcaddr($self->{source});
+    $resolver->srcaddr($self->{source}) if $self->{source};
     $resolver->retry($self->{retry});
     $resolver->retrans($self->{timeout});
     $resolver->usevc($self->{forcetcp});
@@ -2214,7 +2214,7 @@ sub probe {
         $resolver->recurse($packet->header->rd);
     }
     $resolver->port($qport);
-    $resolver->srcaddr($self->{source});
+    $resolver->srcaddr($self->{source}) if $self->{source};
     $resolver->retry($self->{retry});
     $resolver->retrans($self->{timeout});
     $resolver->usevc($self->{forcetcp});
