@@ -404,7 +404,7 @@ my @ruleset = (
                         result      => {
                             vendor  => "NLnetLabs",
                             product => "Unbound",
-                            version => "1.4.10 -- 1.4.12"
+                            version => "1.4.10 -- 1.6.0"
                         },
                     },
                     { fingerprint => ".+", state => "q0r3r23q10r25q11r?" },
