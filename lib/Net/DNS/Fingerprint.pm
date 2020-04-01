@@ -114,9 +114,12 @@ my @iq = (
     "1,UPDATE,0,0,1,1,0,0,FORMERR,0,0,0,0",           #iq20
     "1,QUERY,0,0,1,1,0,0,NOERROR,.+,.+,.+,.+",        #iq21
     "1,QUERY,0,1,1,1,0,0,NOERROR,.+,.+,.+,.+",        #iq22
-    "1,QUERY,0,0,0,0,0,0,REFUSED,0,0,0,0",            #iq23
-    "1,QUERY,0,0,1,1,0,0,REFUSED,1,0,0,0",            #iq24
-    "1,QUERY,0,0,1,1,0,0,NXDOMAIN,.+,.+,.+,.+",       #iq25
+    "1,QUERY,0,0,0,.+,0,0,REFUSED,.+,0,0,0",          #iq23
+    "1,QUERY,0,0,0,0,0,0,REFUSED,0,0,0,0",            #iq24
+    "1,QUERY,0,0,0,1,0,0,REFUSED,1,0,0,0",            #iq25
+    "1,QUERY,0,0,1,1,0,0,REFUSED,1,0,0,0",            #iq26
+    "1,QUERY,0,0,1,1,0,0,NXDOMAIN,.+,.+,.+,.+",       #iq27
+    "1,QUERY,0,0,1,0,0,0,FORMERR,1,0,0,0",            #iq28
 );
 
 my @ruleset = (
@@ -375,43 +378,65 @@ my @ruleset = (
     },
     {
         fingerprint => $iq[23],
-        header      => $qy[10],
-        query       => $nct[10],
+        header      => $qy[0],
+        query       => $nct[0],
         ruleset     => [
             {
                 fingerprint => $iq[24],
-                result      => {
-                    vendor  => "NLnetLabs",
-                    product => "Unbound",
-                    version => "1.3.0 -- 1.4.0"
-                },
+                header      => $qy[10],
+                query       => $nct[10],
+                ruleset     => [
+                    {
+                        fingerprint => $iq[26],
+                        result      => {
+                            vendor  => "NLnetLabs",
+                            product => "Unbound",
+                            version => "1.3.0 -- 1.4.0"
+                        },
+                    },
+                    {
+                        fingerprint => $iq[27],
+                        header      => $qy[11],
+                        query       => $nct[11],
+                        ruleset     => [
+                            {
+                                fingerprint => "header section incomplete",
+                                result      => {
+                                    vendor  => "NLnetLabs",
+                                    product => "Unbound",
+                                    version => "1.4.1 -- 1.4.9"
+                                },
+                            },
+                            {
+                                fingerprint => $iq[19],
+                                result      => {
+                                    vendor  => "NLnetLabs",
+                                    product => "Unbound",
+                                    version => "1.4.10 -- 1.6.0"
+                                },
+                            },
+                            { fingerprint => ".+", state => "q0r3r23q10r25q11r?" },
+                        ]
+                    },
+                ],
             },
             {
                 fingerprint => $iq[25],
-                header      => $qy[11],
-                query       => $nct[11],
+                header      => $qy[10],
+                query       => $nct[10],
                 ruleset     => [
                     {
-                        fingerprint => "header section incomplete",
+                        fingerprint => $iq[28],
                         result      => {
                             vendor  => "NLnetLabs",
                             product => "Unbound",
-                            version => "1.4.1 -- 1.4.9"
+                            version => "1.7.0 -- 1.9.6"
                         },
                     },
-                    {
-                        fingerprint => $iq[19],
-                        result      => {
-                            vendor  => "NLnetLabs",
-                            product => "Unbound",
-                            version => "1.4.10 -- 1.4.12"
-                        },
-                    },
-                    { fingerprint => ".+", state => "q0r3r23q10r25q11r?" },
-                ]
+                ],
             },
         ]
-    },
+    }
 );
 
 my @qy_old = (
