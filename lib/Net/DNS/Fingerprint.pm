@@ -29,6 +29,7 @@
 
 package Net::DNS::Fingerprint;
 
+use 5.010;
 use strict;
 use warnings;
 use Net::DNS;
@@ -2215,12 +2216,21 @@ sub fp2header {
 }
 
 sub probe {
+    state %cache = ();
+
     my $self = shift;
 
     my $qserver = shift;
     my $qport   = shift;
     my $qheader = shift;
-    my @qstring = split(/ /, shift);
+    my $qstring = shift;
+    my $cachekey = "$qserver:$qport/$qheader.$qstring";
+
+    # avoid repeating queries, see if we already got this
+    # question answered.
+    return @{$cache{$cachekey}} if exists $cache{$cachekey};
+
+    my @qstring = split(/ /, $qstring);
 
     my $packet = new Net::DNS::Packet;
     fp2header($qheader, $packet->header);
@@ -2251,7 +2261,11 @@ sub probe {
         print STDERR "\n";
     }
 
-    return ($answer, $resolver->errorstring);
+    # Add to cache, but only if we actually got a response
+    my @ret = ($answer, $resolver->errorstring);
+    $cache{$cachekey} = \@ret if defined $ret[0];
+
+    return @ret;
 }
 
 sub version {
