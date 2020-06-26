@@ -121,6 +121,8 @@ my @iq = (
     "1,QUERY,0,0,1,1,0,0,REFUSED,1,0,0,0",            #iq26
     "1,QUERY,0,0,1,1,0,0,NXDOMAIN,.+,.+,.+,.+",       #iq27
     "1,QUERY,0,0,1,0,0,0,FORMERR,1,0,0,0",            #iq28
+    "1,QUERY,0,0,0,0,0,0,REFUSED,1,0,0,0",            #iq29
+    "1,$NOTIFY,0,0,1,0,0,0,FORMERR,0,0,0,0",          #iq30
 );
 
 my @ruleset = (
@@ -144,6 +146,21 @@ my @ruleset = (
             product => "Eagle DNS",
             version => "1.0 -- 1.0.1"
         },
+    },
+    {
+        fingerprint => $iq[29],
+        header      => $qy[2],
+        query       => $nct[2],
+        ruleset     => [
+            {
+                fingerprint => $iq[30],
+                result      => {
+                    vendor  => "NLnetLabs",
+                    product => "NSD",
+                    version => "4.1.10 -- 4.3.1"
+                },
+            },
+        ],
     },
     {
         fingerprint => $iq[3],
