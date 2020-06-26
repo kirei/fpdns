@@ -34,7 +34,7 @@ use strict;
 use warnings;
 use Net::DNS;
 
-our $VERSION = "0.11.0";
+our $VERSION = "0.12.0";
 
 my %default = (
     source   => undef,
